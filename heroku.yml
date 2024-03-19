@@ -1,13 +1,13 @@
 build:
   docker:
     web: Dockerfile.prod
-    worker_mayaiservice: Dockerfile.prod
+    worker: Dockerfile.prod
     beat: Dockerfile.prod
 release:
   image: web
   command:
     - python manage.py migrate
 run:
-  web: gunicorn APIJamboreeCore.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --log-level=info
-  worker_mayaiservice: celery -A APIJamboreeCore worker --loglevel=info --queues=maAIService
-  beat: celery -A APIJamboreeCore beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  web: gunicorn APIRealtorBuddyCore.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --log-level=info
+  worker: celery -A APIRealtorBuddyCore worker --loglevel=info
+  beat: celery -A APIRealtorBuddyCore beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
