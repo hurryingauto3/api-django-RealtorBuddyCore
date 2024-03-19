@@ -1,0 +1,15 @@
+# General
+*.log
+*.pyc
+*.db
+__pycache__/
+db.sqlite3
+.vscode/
+
+# Virtual environment
+.env
+realtorbuddycore/
+
+# Docker
+docker-compose.override.yml
+Dockerfile
