@@ -9,6 +9,7 @@ db.sqlite3
 # Virtual environment
 .env
 realtorbuddycore/
+staticfiles/
 
 # Docker
 docker-compose.override.yml

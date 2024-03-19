@@ -1,0 +1,15 @@
+<!-- templates/buildings/building_list.html -->
+
+{% block content %}
+    <h2>Building List</h2>
+    <a href="{% url 'building-new' %}">Add New Building</a>
+    <ul>
+    {% for building in buildings %}
+        <li>
+            <a href="{% url 'building-detail' building.pk %}">{{ building.name }}</a>
+            <a href="{% url 'building-edit' building.pk %}">Edit</a>
+            <a href="{% url 'building-delete' building.pk %}">Delete</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

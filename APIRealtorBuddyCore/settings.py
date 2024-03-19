@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from .config import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST, DATABASE_PORT
 
@@ -24,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-&s5pkr1ftwa=td-ollnfus&86)av$+6tszmw6*p04-^v@)x+wi'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -45,21 +46,10 @@ INSTALLED_APPS = [
     
     # Custom Django Apps
     'django_celery_beat',
+    'rest_framework',
     
-    # # External service API wrapper apps
-    # 'stripeService', # Stripe API wrapper for stripe API requests and webhooks
-    # 'followUpBossService', # FollowUpBoss API wrapper for followUpBoss API requests and webhooks
-    
-    # # Internal service apps for daily operations
-    # 'automationService',
-    # 'leadProcessingService',
-    
-    # # User facing apps
-    # 'mayAIService', # Conversational AI for customer service
-    # 'claimHandlingService',
-    # 'landingPageService',
-    # 'quoteGenerationService',
-    # 'notificationService',
+    # Custom Apps
+    'buildingService',
 
 ]
 
@@ -148,6 +138,7 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
