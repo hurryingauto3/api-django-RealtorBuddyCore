@@ -38,6 +38,3 @@ def update_address_abbreviations():
         )
         
         return abbr_dict
-
-from django.db.models import F
-from .models import AddressAbbreviation

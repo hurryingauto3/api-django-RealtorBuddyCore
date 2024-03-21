@@ -9,7 +9,6 @@ class Company(models.Model):
     created_at = models.DateTimeField(default=now)
     name = models.TextField()
 
-
 class AddressAbbreviation(models.Model):
     primary_key = models.AutoField(primary_key=True)
     standard_abbreviation = models.CharField(max_length=10, unique=True)
@@ -23,7 +22,6 @@ class AddressAbbreviation(models.Model):
                 defaults={"common_forms": ",".join(commons)},
             )
 
-
 def normalize_address(address):
     # Fetch abbreviation mapping from the database and store it in a dictionary
     abbreviation_dict = (
@@ -34,7 +32,6 @@ def normalize_address(address):
     abbreviation_mapping = {
         standard: common.split(",") for standard, common in abbreviation_dict
     }
-    
 
     # Convert address to lowercase and remove all punctuation except spaces
     address = re.sub(r"[^\w\s]", "", address.lower())
@@ -91,7 +88,6 @@ class Building(models.Model):
     year_renovated = models.IntegerField(blank=True, null=True)
     n_units = models.IntegerField(blank=True, null=True)
     n_floors = models.IntegerField(blank=True, null=True)
-
 
 class Cooperation(models.Model):
     id = models.AutoField(primary_key=True)
