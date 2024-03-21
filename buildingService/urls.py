@@ -8,6 +8,7 @@ router = DefaultRouter()
 router.register(r'api', views.BuildingViewSet)  # Update with the correct viewset if necessary
 
 urlpatterns = [
+    path('updateAddressAbr/', views.updateAddressAbbreviations, name='updateAddressAbr`'),
     # Traditional Django views for web interface
     # path('', views.index, name=   'building-index'),
     # path('list/', BuildingListView.as_view(), name='building-list'),
