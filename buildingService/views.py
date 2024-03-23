@@ -64,7 +64,7 @@ class BuildingViewSet(viewsets.ModelViewSet):
         type_ = self.request.query_params.get("type")
         if search is not None:
             if type_ and type_ == "elastic":
-                logger.info("Searching with postgres full text search")
+                # logger.info("Searching with postgres full text search")
                 vector = SearchVector(
                     "name", weight="A"
                 )  # + SearchVector('address', weight='B') + SearchVector('city', weight='C') + SearchVector('state', weight='D')
@@ -76,7 +76,7 @@ class BuildingViewSet(viewsets.ModelViewSet):
                 )
 
             else:
-                logger.info("Searching with fuzzy search")
+                # logger.info("Searching with fuzzy search")
                 queryset = queryset.filter(
                     Q(name__icontains=search)
                     | Q(address__icontains=search)

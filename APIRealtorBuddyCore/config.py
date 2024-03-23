@@ -10,6 +10,10 @@ X_SYSTEM = os.getenv('X_SYSTEM')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 SLACK_MAY_TOKEN = os.getenv('SLACK_MAY_TOKEN')
 
+TWILIO_ACCOUNT_SID_ = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN_ = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_NUMBER_ = os.getenv('TWILIO_NUMBER')
+
 # Internal API configuration
 FUB_TEXTING_SERVICE = os.getenv('FUB_TEXTING_SERVICE')
 

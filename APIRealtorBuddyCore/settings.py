@@ -22,6 +22,9 @@ from .config import (
     DATABASE_PORT,
     CELERY_BROKER_URL_,
     CELERY_RESULT_BACKEND_,
+    TWILIO_ACCOUNT_SID_,
+    TWILIO_AUTH_TOKEN_,
+    TWILIO_NUMBER_,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -57,6 +60,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # Custom Apps
     "buildingService",
+    "twilioService",
 ]
 
 # Celery Configuration
@@ -66,6 +70,11 @@ if urlparse(CELERY_BROKER_URL_).scheme == "rediss":
 CELERY_BROKER_URL = CELERY_BROKER_URL_
 CELERY_RESULT_BACKEND = CELERY_RESULT_BACKEND_
 BEAT_SCHEDULER = ("django_celery_beat.schedulers:DatabaseScheduler",)
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID = TWILIO_ACCOUNT_SID_
+TWILIO_AUTH_TOKEN = TWILIO_AUTH_TOKEN_
+TWILIO_NUMBER = TWILIO_NUMBER_
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
