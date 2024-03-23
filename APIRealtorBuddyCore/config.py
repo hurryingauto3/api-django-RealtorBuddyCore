@@ -22,5 +22,5 @@ DATABASE_HOST = DATABASE_URL.split('@')[1].split(':')[0]
 DATABASE_PORT = DATABASE_URL.split('@')[1].split(':')[1].split('/')[0]
 
 # Celery configuration
-CELERY_BROKER_URL = os.getenv('REDIS_URL')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL')
+CELERY_BROKER_URL_ = os.getenv('REDIS_URL')
+CELERY_RESULT_BACKEND_ = os.getenv('REDIS_URL')

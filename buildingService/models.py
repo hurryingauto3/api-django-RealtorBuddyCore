@@ -81,9 +81,7 @@ class Building(models.Model):
     phone = models.TextField(blank=True, null=True)
     website = models.TextField(blank=True, null=True)
     min_lease_term = models.IntegerField(blank=True, null=True)
-    company = models.ForeignKey(
-        Company, on_delete=models.CASCADE, blank=True, null=True
-    )
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, blank=True, null=True)
     year_built = models.IntegerField(blank=True, null=True)
     year_renovated = models.IntegerField(blank=True, null=True)
     n_units = models.IntegerField(blank=True, null=True)
