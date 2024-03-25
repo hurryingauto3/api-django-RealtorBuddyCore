@@ -42,6 +42,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
+    "chilly-views-move.loca.lt",
+    "lovely-lizards-smile.loca.lt"
 ]
 
 INTERNAL_IPS = [
