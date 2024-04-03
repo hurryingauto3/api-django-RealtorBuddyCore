@@ -3,12 +3,6 @@ import uuid
 from django.db import models
 from django.db.models import F
 from django.utils.timezone import now
-
-class Company(models.Model):
-    id = models.AutoField(primary_key=True)
-    created_at = models.DateTimeField(default=now)
-    name = models.TextField()
-
 class AddressAbbreviation(models.Model):
     primary_key = models.AutoField(primary_key=True)
     standard_abbreviation = models.CharField(max_length=10, unique=True)
@@ -55,7 +49,6 @@ def normalize_address(address):
     normalized_address = " ".join(normalized_parts)
     # Return the normalized address, stripping any leading/trailing whitespace
     return normalized_address.strip()
-
 class Building(models.Model):
 
     def save(self, *args, **kwargs):
@@ -80,17 +73,18 @@ class Building(models.Model):
     description = models.TextField(blank=True, null=True)
     phone = models.TextField(blank=True, null=True)
     website = models.TextField(blank=True, null=True)
-    min_lease_term = models.IntegerField(blank=True, null=True)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, blank=True, null=True)
-    year_built = models.IntegerField(blank=True, null=True)
-    year_renovated = models.IntegerField(blank=True, null=True)
-    n_units = models.IntegerField(blank=True, null=True)
-    n_floors = models.IntegerField(blank=True, null=True)
+    # company_name = models.TextField(blank=True, null=True)
+    # min_lease_term = models.IntegerField(blank=True, null=True)
+    # year_built = models.IntegerField(blank=True, null=True)
+    # year_renovated = models.IntegerField(blank=True, null=True)
+    # n_units = models.IntegerField(blank=True, null=True)
+    # n_floors = models.IntegerField(blank=True, null=True)
 
 class Cooperation(models.Model):
     id = models.AutoField(primary_key=True)
     created_at = models.DateTimeField(default=now)
-    building = models.ForeignKey(Building, on_delete=models.CASCADE)
-    cooperate = models.BooleanField()
-    cooperation_type = models.TextField()
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='cooperations')
+    title = models.TextField(null=True, blank=True)
+    cooperate = models.BooleanField(default=False, null=True, blank=True)
+    fixed = models.BooleanField(default=False, null=True, blank=True)
     value = models.IntegerField()

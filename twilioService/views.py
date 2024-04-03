@@ -73,7 +73,6 @@ def textMessageReceived(request):
         return HttpResponse(status=200)
         
 
-
 @require_POST
 @csrf_exempt
 def whatsappMessageReceived(request):
