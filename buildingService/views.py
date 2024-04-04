@@ -9,11 +9,14 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from .utils import update_address_abbreviations
-from .serializers import BuildingSerializer
+from .serializers import BuildingSerializer, CooperationSerializer
 from .models import Building, AddressAbbreviation, Cooperation
 from django.db.models import Q
+from django.db import transaction
+import pandas as pd
 
 from logging import getLogger
+
 
 logger = getLogger(__name__)
 
@@ -21,6 +24,71 @@ logger = getLogger(__name__)
 def index(request):
     return HttpResponse("Realtor Buddy - Building Service")
 
+
+def convertAndInsertBuildingData(request):
+    df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
+    batch_size = 50
+    total_rows = len(df)
+    num_batches = 10
+
+    for batch in range(num_batches):
+        start_index = batch * batch_size
+        end_index = min((batch + 1) * batch_size, total_rows)
+        cooperation_batch_data = []
+        building_batch_data = []
+
+        for _, row in df.iloc[start_index:end_index].iterrows():
+            building_data = {
+                "name": row["name"],
+                "address": row["address"],
+                "city": row["city"],
+                "state": row["state"],
+                "description": row["description"],
+                "latitude": row["lat"],
+                "longitude": row["lng"],
+                "zip": row["zip"],
+                "website": row["website"],
+                "phone": row["phone"],
+                "neighborhood": row["neighborhood_name"],
+                # Add other building fields as needed
+            }
+
+            cooperation_data = {
+                "cooperate": row["cooperate"],
+                "fixed": True if row["cooperation_fixed"] else False,
+                "value": (
+                    row["cooperation_percentage"]
+                    if row["cooperation_percentage"]
+                    else row["cooperation_fixed"] if row["cooperation_fixed"] else None
+                ),
+            }
+
+            try:
+                building_serializer = BuildingSerializer(data=building_data)
+                cooperation_serializer = CooperationSerializer(data=cooperation_data)
+
+                if building_serializer.is_valid():
+                    building = building_serializer.save()
+                    building_batch_data.append(building)
+                    if cooperation_serializer.is_valid():
+                        cooperation_batch_data.append(
+                            cooperation_serializer.validated_data
+                        )
+
+            except Exception:
+                continue
+
+        with transaction.atomic():
+            buildings = Building.objects.bulk_create(building_batch_data, ignore_conflicts=True)
+            cooperations = [
+                Cooperation(building=building, **data)
+                for building, data in zip(buildings, cooperation_batch_data)
+            ]
+            Cooperation.objects.bulk_create(cooperations)
+
+        logger.info(f"Batch {batch + 1} of {num_batches} completed.")
+
+    return HttpResponse("Building data inserted successfully")
 
 def updateAddressAbbreviations(request):
 

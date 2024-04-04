@@ -87,4 +87,4 @@ class Cooperation(models.Model):
     title = models.TextField(null=True, blank=True)
     cooperate = models.BooleanField(default=False, null=True, blank=True)
     fixed = models.BooleanField(default=False, null=True, blank=True)
-    value = models.IntegerField()
+    value = models.IntegerField(null=True, blank=True)

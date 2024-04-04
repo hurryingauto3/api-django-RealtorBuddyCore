@@ -9,6 +9,7 @@ router.register(r'api', views.BuildingViewSet)  # Update with the correct viewse
 
 urlpatterns = [
     path('updateAddressAbr/', views.updateAddressAbbreviations, name='updateAddressAbr`'),
+    path('convertAndInsertBuildingData/', views.convertAndInsertBuildingData, name='convertAndInsertBuildingData'),
     # DRF API URLs
     path('', include(router.urls)),  # This includes router generated URL patterns for the API
 ]

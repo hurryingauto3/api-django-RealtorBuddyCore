@@ -26,8 +26,8 @@ class BuildingSerializer(serializers.ModelSerializer):
             "description",
             "phone",
             "website",
-            "company_name",
             "cooperation"
+            # "company_name",
             # "min_lease_term",
             # "year_built",
             # "year_renovated",
