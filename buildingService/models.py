@@ -3,11 +3,14 @@ import uuid
 from django.db import models
 from django.db.models import F
 from django.utils.timezone import now
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
+
 class AddressAbbreviation(models.Model):
     primary_key = models.AutoField(primary_key=True)
     standard_abbreviation = models.CharField(max_length=10, unique=True)
     common_forms = models.TextField()
-    
+
     @classmethod
     def update_abbreviations(cls, abbr_dict):
         for standard, commons in abbr_dict.items():
@@ -15,6 +18,24 @@ class AddressAbbreviation(models.Model):
                 standard_abbreviation=standard,
                 defaults={"common_forms": ",".join(commons)},
             )
+
+
+def normalize_phone_number(phone):
+    # Remove any non-digit characters from the phone number
+    phone = re.sub(r"\D", "", str(phone))
+
+    # Check if the phone number starts with '1' and remove it if present
+    if phone.startswith("1"):
+        phone = phone[1:]
+
+    # Pad the phone number with zeros if it's less than 10 digits
+    phone = phone.zfill(10)
+
+    # Format the phone number as (XXX) XXX-XXXX
+    formatted_phone = f"({phone[:3]}) {phone[3:6]}-{phone[6:]}"
+
+    return formatted_phone
+
 
 def normalize_address(address):
     # Fetch abbreviation mapping from the database and store it in a dictionary
@@ -49,13 +70,9 @@ def normalize_address(address):
     normalized_address = " ".join(normalized_parts)
     # Return the normalized address, stripping any leading/trailing whitespace
     return normalized_address.strip()
-class Building(models.Model):
 
-    def save(self, *args, **kwargs):
-        # Normalize the address and assign it to address_normalized
-        self.address_normalized = normalize_address(self.address)
-        self.uuid = uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
-        super(Building, self).save(*args, **kwargs)
+
+class Building(models.Model):
 
     id = models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -72,7 +89,20 @@ class Building(models.Model):
     longitude = models.FloatField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     phone = models.TextField(blank=True, null=True)
+    phone_normalized = models.TextField(editable=False, blank=True, null=True)
     website = models.TextField(blank=True, null=True)
+    # search_vector = models.SearchVectorField(null=True)
+
+    def save(self, *args, **kwargs):
+        self.address_normalized = normalize_address(self.address)
+        self.phone_normalized = normalize_phone_number(self.phone)
+        self.uuid = uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
+        super(Building, self).save(*args, **kwargs)  # Save all changes first
+
+        # Now update the search vector
+        # vector = SearchVector('name', weight='A') + SearchVector('address_normalized', weight='B')
+        # Building.objects.filter(pk=self.pk).update(search_vector=vector)
+
     # company_name = models.TextField(blank=True, null=True)
     # min_lease_term = models.IntegerField(blank=True, null=True)
     # year_built = models.IntegerField(blank=True, null=True)
@@ -80,11 +110,14 @@ class Building(models.Model):
     # n_units = models.IntegerField(blank=True, null=True)
     # n_floors = models.IntegerField(blank=True, null=True)
 
+
 class Cooperation(models.Model):
     id = models.AutoField(primary_key=True)
     created_at = models.DateTimeField(default=now)
-    building = models.ForeignKey(Building, on_delete=models.CASCADE, related_name='cooperations')
+    building = models.ForeignKey(
+        Building, on_delete=models.CASCADE, related_name="cooperation"
+    )
     title = models.TextField(null=True, blank=True)
     cooperate = models.BooleanField(default=False, null=True, blank=True)
-    fixed = models.BooleanField(default=False, null=True, blank=True)
-    value = models.IntegerField(null=True, blank=True)
+    cooperation_fixed = models.IntegerField(null=True, blank=True)
+    cooperation_percentage = models.IntegerField(null=True, blank=True)

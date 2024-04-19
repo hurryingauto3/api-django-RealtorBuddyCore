@@ -6,11 +6,11 @@ from .models import Building, Cooperation
 class CooperationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cooperation
-        fields = ["title", "cooperate", "fixed", "value"]
+        fields = ["title", "cooperate", "cooperation_fixed", "cooperation_percentage"]
 
 
 class BuildingSerializer(serializers.ModelSerializer):
-    cooperation = CooperationSerializer(required=False)
+    cooperation = CooperationSerializer(many=True, read_only=True)  # Ensure 'many=True' is set
 
     class Meta:
         model = Building
@@ -26,7 +26,7 @@ class BuildingSerializer(serializers.ModelSerializer):
             "description",
             "phone",
             "website",
-            "cooperation"
+            "cooperation",
             # "company_name",
             # "min_lease_term",
             # "year_built",
