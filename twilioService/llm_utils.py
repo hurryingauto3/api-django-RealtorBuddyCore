@@ -10,6 +10,8 @@ from langchain_core.pydantic_v1 import BaseModel, Field, validator
 
 logger = logging.getLogger(__name__)
 
+extraction_llm = 'gpt-3.5-turbo'
+presentation_llm = 'gpt-4'
 
 # Function to distill the name of the building/address from the customer's search query
 def distillSearchItemFromQuery(search_query: str) -> str:
@@ -31,7 +33,7 @@ def distillSearchItemFromQuery(search_query: str) -> str:
             return value
 
     parser = PydanticOutputParser(pydantic_object=SearchQuery)
-    llm = ChatOpenAI(model="gpt-4")
+    llm = ChatOpenAI(model=extraction_llm)
     query = f'Extract the name of the building/address from the search query: "{search_query}"'
     prompt = PromptTemplate(
         template="\n{format_instructions}\n{query}\n",
@@ -43,7 +45,7 @@ def distillSearchItemFromQuery(search_query: str) -> str:
     messages = [
         HumanMessage(content=(input_string)),
     ]
-    retries = 3
+    retries = 1
     # logger.info("input_string: %s", input_string)ß
     for retry in range(retries):
         try:
@@ -78,7 +80,7 @@ def displaySearchResultsToCustomer(user_query, search_results) -> str:
             return value
 
     parser = PydanticOutputParser(pydantic_object=clientReply)
-    llm = ChatOpenAI(model="gpt-4")
+    llm = ChatOpenAI(model=presentation_llm)
     query = f"""
     You are John, an agent that is responsible for helping locators/realtors/real estate professionals find out if a certain property cooperates with them and on what terms. You have access to do perform an api call to retrieve this information. The client may make an ask of you in the following ways:
 

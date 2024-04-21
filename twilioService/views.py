@@ -1,3 +1,4 @@
+import time
 import json
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -145,6 +146,7 @@ def textMessageBuildingSearch(request):
 @csrf_exempt
 @require_POST
 def internalTextMessageReceived(request):
+    
     try:
         data = json.loads(request.body)  # Parse the JSON data from the request body
     except json.JSONDecodeError:
@@ -152,9 +154,15 @@ def internalTextMessageReceived(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
     message_raw = data.get("Body", None)
-    message_distilled = distillSearchItemFromQuery(message_raw)
+    # message_distilled = distillSearchItemFromQuery(message_raw)
+    message_distilled = None
+    start_time = time.time()
     search_result = getTextMessageBuildingSearchResponse(message_distilled if message_distilled else message_raw)
+    search_time = round(time.time() - start_time, 2)
+    
+    start_time = time.time()
     output = displaySearchResultsToCustomer(message_raw, search_result)
+    ai_present_time = round(time.time() - start_time, 2)
     
     return JsonResponse(
         {
@@ -162,5 +170,7 @@ def internalTextMessageReceived(request):
             "message_distilled": message_distilled,
             "search_result": search_result,
             "output": output,
+            "search_time": search_time,
+            "ai_present_time": ai_present_time,
         }
     )
