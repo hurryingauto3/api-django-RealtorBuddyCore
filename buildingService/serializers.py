@@ -16,6 +16,8 @@ class BuildingSerializer(serializers.ModelSerializer):
         model = Building
         fields = [
             "name",
+            "created_at",
+            "updated_at",
             "address",
             "neighborhood",
             "city",

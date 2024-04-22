@@ -71,6 +71,25 @@ def normalize_address(address):
     # Return the normalized address, stripping any leading/trailing whitespace
     return normalized_address.strip()
 
+def clean_name(name):
+    
+    # Convert name to lowercase and remove all punctuation except spaces
+    name = re.sub(r"[^\w\s]", "", name.lower())
+
+    # Replace multiple spaces with a single space
+    name = re.sub(r"\s+", " ", name)
+    name = name.split(',')[0]
+    name = name.split('#')[0]
+    name = name.split('unit')[0]
+
+    name_parts = name.split(' ')
+    clean_parts = []
+    
+    for part in name_parts:
+        clean_parts.append(part[0].upper() + part[1:])
+    
+    name = ' '.join(clean_parts)
+    return name
 
 class Building(models.Model):
 
@@ -94,6 +113,7 @@ class Building(models.Model):
     # search_vector = models.SearchVectorField(null=True)
 
     def save(self, *args, **kwargs):
+        self.name = clean_name(self.name)
         self.address_normalized = normalize_address(self.address)
         self.phone_normalized = normalize_phone_number(self.phone)
         self.uuid = uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)

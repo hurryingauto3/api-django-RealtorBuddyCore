@@ -74,7 +74,7 @@ def updateAddressAbbreviations(request):
     return HttpResponse("Update Address Abbreviations")
 
 class CustomPagination(PageNumberPagination):
-    page_size = 5  # default page size
+    page_size = 10  # default page size
     page_query_param = "page"  # parameter for the page number in the query string
     page_size_query_param = (
         "page_size"  # parameter to override page size in the query string

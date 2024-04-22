@@ -40,7 +40,11 @@ SECRET_KEY = "django-insecure-&s5pkr1ftwa=td-ollnfus&86)av$+6tszmw6*p04-^v@)x+wi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "cyan-friends-relate.loca.lt", "75df-39-57-199-145.ngrok-free.app"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "cyan-friends-relate.loca.lt",
+    "few-seals-read.loca.lt",
+]
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -90,7 +94,7 @@ CORS_ALLOW_ALL_ORIGINS = False  # Switch to False if specifying allowed origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://bumpy-moles-allow.loca.lt"
+    "https://bumpy-moles-allow.loca.lt",
 ]
 
 ROOT_URLCONF = "APIRealtorBuddyCore.urls"

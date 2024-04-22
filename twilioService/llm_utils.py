@@ -11,7 +11,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field, validator
 logger = logging.getLogger(__name__)
 
 extraction_llm = 'gpt-3.5-turbo'
-presentation_llm = 'gpt-4'
+presentation_llm = 'gpt-3.5-turbo' # LLM being used for outputting the search results to the customer
 
 # Function to distill the name of the building/address from the customer's search query
 def distillSearchItemFromQuery(search_query: str) -> str:
@@ -26,7 +26,7 @@ def distillSearchItemFromQuery(search_query: str) -> str:
             description="The name of the building/address from the customer's search query"
         )
 
-        @validator("search_query")
+        @validator("search_query", allow_reuse=True)
         def validate_search_query(cls, value):
             if not value:
                 raise ValueError("Search query cannot be empty")
@@ -73,7 +73,7 @@ def displaySearchResultsToCustomer(user_query, search_results) -> str:
             description="The search results to be displayed to the customer"
         )
 
-        @validator("client_reply")
+        @validator("client_reply", allow_reuse=True)
         def validate_client_reply(cls, value):
             if not value:
                 raise ValueError("Client reply cannot be empty")
@@ -81,14 +81,17 @@ def displaySearchResultsToCustomer(user_query, search_results) -> str:
 
     parser = PydanticOutputParser(pydantic_object=clientReply)
     llm = ChatOpenAI(model=presentation_llm)
+    # System pr
     query = f"""
-    You are John, an agent that is responsible for helping locators/realtors/real estate professionals find out if a certain property cooperates with them and on what terms. You have access to do perform an api call to retrieve this information. The client may make an ask of you in the following ways:
+    You are John, an agent that is responsible for helping locators/realtors/real estate professionals discover if a certain property cooperates with them and on what terms. You have access to perform an api call to retrieve this information. The client may make an ask of you in the following ways:
 
     'Hey John, can you tell me if Gallaries at Park Lane cooperates?"
     "Hi, does 2801 Broadmead Dr, Houston pay locators"
     "Can you tell me if  [building name] cooperates?"
 
-    Generally the ask will include a building name and/or a building address as the main identifier of the building in question that needs its cooperating status clarified.
+    Generally the ask will include a building name and/or a building address as the main identifier of the building in question that needs its cooperating status clarified. The results will be presented to you in the following format: "{user_query}"
+    
+    You must interpret the results and make a reasonable estimate of which one of the results is the building name/address that the client is asking about.    
 
     Please output this information in the following format:
 
@@ -100,7 +103,8 @@ def displaySearchResultsToCustomer(user_query, search_results) -> str:
 
     "Hey this building does not cooperate with locators at the moment. We checked this last at [last update timestamp]. Do you have other buildings we can try to place at?"
     
-    These are the search results for the query: "{user_query}"
+    
+    
     
     {search_results}
     """
