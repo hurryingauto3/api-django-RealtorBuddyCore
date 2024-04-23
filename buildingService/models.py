@@ -1,9 +1,8 @@
 import re
 import uuid
-from django.db import models
 from django.db.models import F
+from django.db import models
 from django.utils.timezone import now
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 
 
 class AddressAbbreviation(models.Model):
@@ -36,6 +35,10 @@ def normalize_phone_number(phone):
 
     return formatted_phone
 
+def advanced_common_forms(abbreviation_mapping, part):
+    for i in abbreviation_mapping.keys():
+        if part in abbreviation_mapping[i]:
+            return abbreviation_mapping[i]
 
 def normalize_address(address):
     # Fetch abbreviation mapping from the database and store it in a dictionary
@@ -105,8 +108,8 @@ def normalize_address(address):
     address = address.lower()
     address = address.split("#")[0]
     address = address.split("unit")[0]
-    # Remove everything except alphanumeric characters and spaces and dashes
-    address = re.sub(r"[^\w\s-]", "", address)
+    # Remove everything except alphanumeric characters and spaces, hyphens, slashes, and ampersands
+    address = re.sub(r"[^a-z0-9\s\-/&]", "", address)
 
     # Replace multiple spaces with a single space
     address = re.sub(r"\s+", " ", address)
@@ -116,10 +119,21 @@ def normalize_address(address):
 
     # Normalize the address parts based on the abbreviation mapping
     normalized_parts = []
-    for part in address_parts:
+    last_suffix_place = None
+    last_part_is_suffix = False
+    for i, part in enumerate(address_parts):
 
         # Look up the part in the abbreviation mapping
         common_forms = abbreviation_mapping.get(part)
+        if not common_forms:
+            common_forms = advanced_common_forms(abbreviation_mapping, part)
+        
+        if common_forms:
+            last_suffix_place = i
+            last_part_is_suffix = True
+            
+        else:
+            last_part_is_suffix = False
         # Replace with the abbreviation if it exists, otherwise keep the original part
         normalized_part = common_forms[0] if common_forms else part
 
@@ -129,17 +143,19 @@ def normalize_address(address):
         normalized_parts.append(normalized_part)
 
     # Re-join the normalized parts into a single string
-    normalized_address = " ".join(normalized_parts)
     # Return the normalized address, stripping any leading/trailing whitespace
-
-    if normalized_address == "":
+    if not last_part_is_suffix:
+        if last_suffix_place:
+            # if normalized_parts[last_suffix_place] in ["north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest"]:
+            
+            #     normalized_parts = normalized_parts[:last_suffix_place + 2]
+            # else:
+            normalized_parts = normalized_parts[:last_suffix_place + 1]
+    if len(normalized_parts) < 2:
         return None
 
-    if len(normalized_address) < 2:
-        return None
-
+    normalized_address = " ".join(normalized_parts)    
     return normalized_address.strip()
-
 
 def clean_name(name):
 
@@ -161,16 +177,15 @@ def clean_name(name):
     name = " ".join(clean_parts)
     return name
 
-
 class Building(models.Model):
 
     id = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(editable=False, unique=True, null=False)
     created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
-    name = models.TextField()
-    address = models.TextField()
-    address_normalized = models.TextField(editable=False)
+    name = models.TextField(null=False, blank=False)
+    address = models.TextField(null=False, blank=False)
+    address_normalized = models.TextField(editable=False, null=False, blank=False)
     neighborhood = models.TextField(blank=True, null=True)
     city = models.TextField(blank=True, null=True)
     state = models.CharField(max_length=2, blank=True, null=True)
@@ -187,11 +202,12 @@ class Building(models.Model):
         self.name = clean_name(self.name)
         self.phone_normalized = normalize_phone_number(self.phone)
         self.address_normalized = normalize_address(self.address)
-        self.uuid = (
-            uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
-            if self.address_normalized
-            else None
-        )
+        if not self.pk and not self.uuid:  # Check if new and UUID not set
+            self.uuid = (
+                uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
+                if self.address_normalized
+                else None
+            )
         super(Building, self).save(*args, **kwargs)  # Save all changes first
 
         # Now update the search vector

@@ -13,7 +13,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from .utils import update_address_abbreviations
 from .serializers import BuildingSerializer, CooperationSerializer
-from .models import Building, AddressAbbreviation, Cooperation
+from .models import Building, AddressAbbreviation, Cooperation, normalize_address
 from django.db.models import Q, F
 from django.db.models.functions import Greatest
 import pandas as pd
@@ -72,6 +72,11 @@ def updateAddressAbbreviations(request):
     abbr_dict = {**abbr_dict, **directions_mapping}
     AddressAbbreviation.update_abbreviations(abbr_dict)
     return HttpResponse("Update Address Abbreviations")
+
+def getNormalizedAddress(request):
+    address = request.GET.get("address")
+    address_norm = normalize_address(address)
+    return JsonResponse({"normalized_address": address_norm})
 
 class CustomPagination(PageNumberPagination):
     page_size = 10  # default page size

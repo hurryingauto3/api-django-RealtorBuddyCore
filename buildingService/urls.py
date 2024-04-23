@@ -20,6 +20,7 @@ urlpatterns = [
         views.convertAndInsertBuildingData,
         name="convertAndInsertBuildingData",
     ),
+    path("normalizeAddress/", views.getNormalizedAddress, name="normalizeAddress"),
     # DRF API URLs
     path(
         "", include(router.urls)
