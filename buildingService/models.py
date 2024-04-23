@@ -48,8 +48,65 @@ def normalize_address(address):
         standard: common.split(",") for standard, common in abbreviation_dict
     }
 
+    state_codes = [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+    ]
     # Convert address to lowercase and remove all punctuation except spaces
-    address = re.sub(r"[^\w\s]", "", address.lower())
+
+    address = address.lower()
+    address = address.split("#")[0]
+    address = address.split("unit")[0]
+    # Remove everything except alphanumeric characters and spaces and dashes
+    address = re.sub(r"[^\w\s-]", "", address)
 
     # Replace multiple spaces with a single space
     address = re.sub(r"\s+", " ", address)
@@ -60,36 +117,50 @@ def normalize_address(address):
     # Normalize the address parts based on the abbreviation mapping
     normalized_parts = []
     for part in address_parts:
+
         # Look up the part in the abbreviation mapping
         common_forms = abbreviation_mapping.get(part)
         # Replace with the abbreviation if it exists, otherwise keep the original part
         normalized_part = common_forms[0] if common_forms else part
+
+        if normalized_part.upper() in state_codes:
+            break
+
         normalized_parts.append(normalized_part)
 
     # Re-join the normalized parts into a single string
     normalized_address = " ".join(normalized_parts)
     # Return the normalized address, stripping any leading/trailing whitespace
+
+    if normalized_address == "":
+        return None
+
+    if len(normalized_address) < 2:
+        return None
+
     return normalized_address.strip()
 
+
 def clean_name(name):
-    
+
     # Convert name to lowercase and remove all punctuation except spaces
     name = re.sub(r"[^\w\s]", "", name.lower())
 
     # Replace multiple spaces with a single space
     name = re.sub(r"\s+", " ", name)
-    name = name.split(',')[0]
-    name = name.split('#')[0]
-    name = name.split('unit')[0]
+    name = name.split(",")[0]
+    name = name.split("#")[0]
+    name = name.split("unit")[0]
 
-    name_parts = name.split(' ')
+    name_parts = name.split(" ")
     clean_parts = []
-    
+
     for part in name_parts:
         clean_parts.append(part[0].upper() + part[1:])
-    
-    name = ' '.join(clean_parts)
+
+    name = " ".join(clean_parts)
     return name
+
 
 class Building(models.Model):
 
@@ -102,7 +173,7 @@ class Building(models.Model):
     address_normalized = models.TextField(editable=False)
     neighborhood = models.TextField(blank=True, null=True)
     city = models.TextField(blank=True, null=True)
-    state = models.TextField(blank=True, null=True)
+    state = models.CharField(max_length=2, blank=True, null=True)
     zip = models.TextField(blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
@@ -114,9 +185,13 @@ class Building(models.Model):
 
     def save(self, *args, **kwargs):
         self.name = clean_name(self.name)
-        self.address_normalized = normalize_address(self.address)
         self.phone_normalized = normalize_phone_number(self.phone)
-        self.uuid = uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
+        self.address_normalized = normalize_address(self.address)
+        self.uuid = (
+            uuid.uuid5(uuid.NAMESPACE_DNS, self.address_normalized)
+            if self.address_normalized
+            else None
+        )
         super(Building, self).save(*args, **kwargs)  # Save all changes first
 
         # Now update the search vector
