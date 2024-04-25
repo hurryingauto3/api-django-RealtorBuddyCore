@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     # Custom Apps
     "buildingService",
     "twilioService",
+    "stripeService",
 ]
 
 # Celery Configuration

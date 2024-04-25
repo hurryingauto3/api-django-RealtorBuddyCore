@@ -12,6 +12,7 @@ db.sqlite3
 .env
 realtorbuddycore/
 staticfiles/
+datafiles/
 
 # Docker
 docker-compose.override.yml
