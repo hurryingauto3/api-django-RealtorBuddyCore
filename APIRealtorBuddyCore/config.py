@@ -13,6 +13,8 @@ TWILIO_NUMBER_ = os.getenv("TWILIO_NUMBER")
 STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
 STRIPE_WEBOOK_SECRET = os.getenv('STRIPE_WEBOOK_SECRET')
 
+SLACK_BA_TOKEN = os.getenv('SLACK_BA_TOKEN')
+
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 DATABASE_NAME = DATABASE_URL.split("/")[-1]

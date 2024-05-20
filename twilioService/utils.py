@@ -30,4 +30,4 @@ def getTextMessageBuildingSearchResponse(message_body):
     params = {"search": message_body, "format": "json"}
     response = requests.get(search_url, params=params, timeout=10)
     buildings = response.json() if response.status_code == 200 else []
-    return buildings
+    return buildings.get("results", []) if buildings else []

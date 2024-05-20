@@ -53,11 +53,12 @@ def textMessageReceived(request):
     )
     
     textmessage.save()
-    logger.info(f"Text message received: {textmessage.body}")
     
     if textmessage.sms_status == "received":
+        
+        # Stripe check workflow
+        # Manual building information audit workflow
 
-        logger.info(f"Sending response to {textmessage.from_number}")
         response = MessagingResponse()
         message_raw = textmessage.body
         search_result = getTextMessageBuildingSearchResponse(message_raw)
@@ -77,8 +78,15 @@ def textMessageReceived(request):
 
     else:
         return HttpResponse(status=200)
+    
+    
+# Slack hook for greenlighting building information output
+# Accepts slack hook
+# Checks if building was updated
+# If building was updated, sends message to customer
+# If building was not updated, sends message to slack reporting channel
 
-
+# Not for production use
 @require_POST
 @csrf_exempt
 def whatsappMessageReceived(request):
