@@ -15,6 +15,7 @@ class BuildingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Building
         fields = [
+            "id",
             "name",
             "created_at",
             "updated_at",
