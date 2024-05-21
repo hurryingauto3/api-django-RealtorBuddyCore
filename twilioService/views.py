@@ -1,6 +1,7 @@
 import time
 import json
 import logging
+import datetime
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -24,11 +25,12 @@ def sendTextMessageEP(request):
     except Exception as e:
         return HttpResponse(str(e), status=500)
 
+
 @require_POST
 @csrf_exempt
 def textMessageReceived(request):
     data = request.POST
-    textmessage = TextMessage(
+    textmessage = TextMessage.objects.create(
         to_country=data.get("ToCountry", ""),
         to_state=data.get("ToState", ""),
         sms_message_sid=data.get("SmsMessageSid", ""),
@@ -49,19 +51,20 @@ def textMessageReceived(request):
         from_number=data.get("From", ""),
         api_version=data.get("ApiVersion", ""),
     )
-    textmessage.save()
-    
+
     if textmessage.sms_status != "received":
         return HttpResponse(status=200)
 
     response = MessagingResponse()
     try:
-        # Attempt to fetch the customer and subscription from the database
         stripe_customer = Customer.objects.get(phone=textmessage.from_number)
         stripe_subscription = Subscription.objects.get(customer=stripe_customer)
 
-        # Check if the subscription is active
-        if stripe_subscription.status == "active":
+        # Check if the subscription is active or has been canceled but the period has not ended yet
+        if stripe_subscription.status == "active" or (
+            stripe_subscription.cancel_at_period_end
+            and datetime.datetime.now() <= stripe_subscription.current_period_end
+        ):
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
@@ -70,16 +73,31 @@ def textMessageReceived(request):
                 else "Thank you for your message. We will get back to you soon."
             )
             response.message(response_text)
-            return HttpResponse(str(response), content_type="application/xml")
+
+            # Inform the user if the subscription is ending soon
+            if (
+                stripe_subscription.cancel_at_period_end
+                and datetime.datetime.now() <= stripe_subscription.current_period_end
+            ):
+                date = stripe_subscription.canceled_at.strftime("%Y-%m-%d")
+                response.message(
+                    f"Your subscription will end on {date}. To avoid interruption, please renew at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+                )
+
+        # Handle expired subscriptions
+        elif datetime.datetime.now() > stripe_subscription.current_period_end:
+            response.message(
+                "Your subscription has expired. To continue using our services, please renew at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+            )
+
+        return HttpResponse(str(response), content_type="application/xml")
 
     except (Customer.DoesNotExist, Subscription.DoesNotExist):
-        # Handle the case where the customer or subscription does not exist
         previous_texts = TextMessage.objects.filter(
             from_number=textmessage.from_number
         ).count()
 
         if previous_texts <= 4:
-            # Free access for the first two messages
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
@@ -90,14 +108,14 @@ def textMessageReceived(request):
             response.message(response_text)
             if previous_texts > 2:
                 response.message(
-                    "Hello fellow real estate professional! We're glad you're enjoying our services. Please subscribe your continued use of our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss. Thank you!."
+                    "Hello! To continue enjoying our services uninterrupted, please subscribe at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
                 )
         else:
-            # No more free information, request to subscribe
-            response.message("Hey there! Hope our information has helped you with your job. We'd appreciate it if you pay for your continued use of our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss. Cheers!")
+            response.message(
+                "Please subscribe to continue receiving our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+            )
 
     return HttpResponse(str(response), content_type="application/xml")
-
 
 # Not for production use
 @require_POST
