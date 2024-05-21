@@ -136,8 +136,6 @@ def handleSubscriptionEvent(event):
         event (dict): The Stripe event data
     """
     subscription_data = event["data"]["object"]
-    logger.info(f"Subscription data: {subscription_data}")
-
     customer_id = subscription_data.get("customer")
     customer = None
     if customer_id:

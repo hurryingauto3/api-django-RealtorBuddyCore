@@ -1,16 +1,17 @@
 import time
 import json
+import logging
+
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .models import TextMessage, WhatsAppMessage
 from .utils import getTextMessageBuildingSearchResponse, sendTextMessage
-from .llm_utils import distillSearchItemFromQuery, displaySearchResultsToCustomer
-
+from .llm_utils import displaySearchResultsToCustomer
 from twilio.twiml.messaging_response import MessagingResponse, Message
 
-import logging
+from stripeService.models import Customer, Subscription
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +24,10 @@ def sendTextMessageEP(request):
     except Exception as e:
         return HttpResponse(str(e), status=500)
 
-
 @require_POST
-@csrf_exempt  # Twilio requests will not have a CSRF token
+@csrf_exempt
 def textMessageReceived(request):
-    
-    data = request.POST  # Parse the POST data from the request body
-
+    data = request.POST
     textmessage = TextMessage(
         to_country=data.get("ToCountry", ""),
         to_state=data.get("ToState", ""),
@@ -51,46 +49,60 @@ def textMessageReceived(request):
         from_number=data.get("From", ""),
         api_version=data.get("ApiVersion", ""),
     )
-    
     textmessage.save()
     
-    if textmessage.sms_status == "received":
-        
-        # Stripe check workflow
-        # Manual building information audit workflow
-
-        response = MessagingResponse()
-        message_raw = textmessage.body
-        search_result = getTextMessageBuildingSearchResponse(message_raw)
-
-        if search_result:
-            response_text = displaySearchResultsToCustomer(message_raw, search_result)
-            response.append(Message(body=response_text))
-
-        else:
-            response.append(
-                Message(
-                    body="Hello! Thanks for your message. We will get back to you soon."
-                )
-            )
-
-        return HttpResponse(str(response), content_type="application/xml")
-
-    else:
+    if textmessage.sms_status != "received":
         return HttpResponse(status=200)
-    
-    
-# Slack hook for greenlighting building information output
-# Accepts slack hook
-# Checks if building was updated
-# If building was updated, sends message to customer
-# If building was not updated, sends message to slack reporting channel
+
+    response = MessagingResponse()
+    try:
+        # Attempt to fetch the customer and subscription from the database
+        stripe_customer = Customer.objects.get(phone=textmessage.from_number)
+        stripe_subscription = Subscription.objects.get(customer=stripe_customer)
+
+        # Check if the subscription is active
+        if stripe_subscription.status == "active":
+            message_raw = textmessage.body
+            search_result = getTextMessageBuildingSearchResponse(message_raw)
+            response_text = (
+                displaySearchResultsToCustomer(message_raw, search_result)
+                if search_result
+                else "Thank you for your message. We will get back to you soon."
+            )
+            response.message(response_text)
+            return HttpResponse(str(response), content_type="application/xml")
+
+    except (Customer.DoesNotExist, Subscription.DoesNotExist):
+        # Handle the case where the customer or subscription does not exist
+        previous_texts = TextMessage.objects.filter(
+            from_number=textmessage.from_number
+        ).count()
+
+        if previous_texts <= 4:
+            # Free access for the first two messages
+            message_raw = textmessage.body
+            search_result = getTextMessageBuildingSearchResponse(message_raw)
+            response_text = (
+                displaySearchResultsToCustomer(message_raw, search_result)
+                if search_result
+                else "Thank you for your message. We will get back to you soon."
+            )
+            response.message(response_text)
+            if previous_texts > 2:
+                response.message(
+                    "Hello fellow real estate professional! We're glad you're enjoying our services. Please subscribe your continued use of our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss. Thank you!."
+                )
+        else:
+            # No more free information, request to subscribe
+            response.message("Hey there! Hope our information has helped you with your job. We'd appreciate it if you pay for your continued use of our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss. Cheers!")
+
+    return HttpResponse(str(response), content_type="application/xml")
+
 
 # Not for production use
 @require_POST
 @csrf_exempt
 def whatsappMessageReceived(request):
-    
     data = request.POST  # Parse the POST data from the request body
     # Create and save a new WhatsAppMessage instance
     whatsapp_message = WhatsAppMessage(
@@ -134,27 +146,30 @@ def whatsappMessageReceived(request):
     else:
         return HttpResponse(status=200)
 
+
 @csrf_exempt
 @require_POST
 def internalTextMessageReceived(request):
-    
+
     try:
         data = json.loads(request.body)  # Parse the JSON data from the request body
     except json.JSONDecodeError:
         logger.error("Error decoding JSON")
         return JsonResponse({"error": "Invalid JSON"}, status=400)
-    
+
     message_raw = data.get("Body", None)
     # message_distilled = distillSearchItemFromQuery(message_raw)
     message_distilled = None
     start_time = time.time()
-    search_result = getTextMessageBuildingSearchResponse(message_distilled if message_distilled else message_raw)
+    search_result = getTextMessageBuildingSearchResponse(
+        message_distilled if message_distilled else message_raw
+    )
     search_time = round(time.time() - start_time, 2)
-    
+
     start_time = time.time()
     output = displaySearchResultsToCustomer(message_raw, search_result)
     ai_present_time = round(time.time() - start_time, 2)
-    
+
     return JsonResponse(
         {
             "message_raw": message_raw,
