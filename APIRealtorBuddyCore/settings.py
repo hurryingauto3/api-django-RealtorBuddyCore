@@ -30,7 +30,6 @@ from .config import (
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -42,30 +41,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
-    "cyan-friends-relate.loca.lt",
-    "few-seals-read.loca.lt",
+    "978a-39-51-66-137.ngrok-free.app",
+    "6494-39-51-66-137.ngrok-free.app",
+    "2e0a-39-51-66-137.ngrok-free.app",
 ]
 
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-INSTALLED_APPS = [
-    # Django Apps
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # Custom Django Apps
-    "django_celery_beat",
-    "corsheaders",
-    "rest_framework",
-    # Custom Apps
-    "buildingService",
-    "twilioService",
-    "stripeService",
-]
 
 # Celery Configuration
 if urlparse(CELERY_BROKER_URL_).scheme == "rediss":
@@ -80,16 +64,67 @@ TWILIO_ACCOUNT_SID = TWILIO_ACCOUNT_SID_
 TWILIO_AUTH_TOKEN = TWILIO_AUTH_TOKEN_
 TWILIO_NUMBER = TWILIO_NUMBER_
 
+
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.sessions",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "django_celery_beat",
+    "corsheaders",
+    "rest_framework",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "buildingService",
+    "twilioService",
+    "stripeService",
+    "slackService",
+]
+
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # Moved up
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # Moved up
+    "allauth.account.middleware.AccountMiddleware",
 ]
+
+
+SITE_ID = 1
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/buildings"  # Adjust to your redirect URL
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+        "APP": {
+            "client_id": "290612555837-ns0g19p298he16831squpgudr1e7hkad.apps.googleusercontent.com",
+            "secret": "MNpOdutoLX_0NkF5J62zLBhnbB3A",
+        },
+        "EMAIL_AUTHENTICATION": True,
+    }
+}
+
 
 CORS_ALLOW_ALL_ORIGINS = False  # Switch to False if specifying allowed origins
 CORS_ALLOWED_ORIGINS = [
@@ -111,13 +146,13 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # "allauth.account.context_processors.account",
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = "APIRealtorBuddyCore.wsgi.application"
-
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
