@@ -1,10 +1,15 @@
+import json
+import logging
 import requests
 from APIRealtorBuddyCore.config import (
     TWILIO_ACCOUNT_SID_,
     TWILIO_AUTH_TOKEN_,
     TWILIO_NUMBER_,
+    SLACK_BA_TOKEN,
 )
 from twilio.rest import Client
+
+logger = logging.getLogger(__name__)
 
 
 def sendTextMessage(to_number, body):
@@ -18,9 +23,8 @@ def sendTextMessage(to_number, body):
 
     return message
 
-
 def getTextMessageBuildingSearchResponse(message_body):
-    
+
     if not message_body:
         return None
 
@@ -31,3 +35,4 @@ def getTextMessageBuildingSearchResponse(message_body):
     response = requests.get(search_url, params=params, timeout=10)
     buildings = response.json() if response.status_code == 200 else []
     return buildings.get("results", []) if buildings else []
+

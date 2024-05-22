@@ -7,7 +7,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import TextMessage, WhatsAppMessage
+from .models import TextMessage
 from .utils import getTextMessageBuildingSearchResponse, sendTextMessage
 from .llm_utils import displaySearchResultsToCustomer
 from twilio.twiml.messaging_response import MessagingResponse, Message
@@ -30,32 +30,37 @@ def sendTextMessageEP(request):
 @csrf_exempt
 def textMessageReceived(request):
     data = request.POST
-    textmessage = TextMessage.objects.create(
-        to_country=data.get("ToCountry", ""),
-        to_state=data.get("ToState", ""),
+    textmessage, created = TextMessage.objects.update_or_create(
         sms_message_sid=data.get("SmsMessageSid", ""),
-        num_media=data.get("NumMedia", ""),
-        to_city=data.get("ToCity", ""),
-        from_zip=data.get("FromZip", ""),
-        sms_sid=data.get("SmsSid", ""),
-        from_state=data.get("FromState", ""),
-        sms_status=data.get("SmsStatus", ""),
-        from_city=data.get("FromCity", ""),
-        body=data.get("Body", ""),
-        from_country=data.get("FromCountry", ""),
-        to_number=data.get("To", ""),
-        to_zip=data.get("ToZip", ""),
-        num_segments=data.get("NumSegments", ""),
-        message_sid=data.get("MessageSid", ""),
-        account_sid=data.get("AccountSid", ""),
-        from_number=data.get("From", ""),
-        api_version=data.get("ApiVersion", ""),
+        defaults={
+            "to_country": data.get("ToCountry", ""),
+            "to_state": data.get("ToState", ""),
+            "sms_message_sid": data.get("SmsMessageSid", ""),
+            "num_media": data.get("NumMedia", ""),
+            "to_city": data.get("ToCity", ""),
+            "from_zip": data.get("FromZip", ""),
+            "sms_sid": data.get("SmsSid", ""),
+            "from_state": data.get("FromState", ""),
+            "sms_status": data.get("SmsStatus", ""),
+            "from_city": data.get("FromCity", ""),
+            "body": data.get("Body", ""),
+            "from_country": data.get("FromCountry", ""),
+            "to_number": data.get("To", ""),
+            "to_zip": data.get("ToZip", ""),
+            "num_segments": data.get("NumSegments", ""),
+            "message_sid": data.get("MessageSid", ""),
+            "account_sid": data.get("AccountSid", ""),
+            "from_number": data.get("From", ""),
+            "api_version": data.get("ApiVersion", ""),
+        },
     )
-
     if textmessage.sms_status != "received":
         return HttpResponse(status=200)
 
-    response = MessagingResponse()
+    response = MessagingResponse(
+        action="https://2e0a-39-51-66-137.ngrok-free.app/internalTextMessageReceived/"
+    )
+
     try:
         stripe_customer = Customer.objects.get(phone=textmessage.from_number)
         stripe_subscription = Subscription.objects.get(customer=stripe_customer)
@@ -68,7 +73,7 @@ def textMessageReceived(request):
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
-                displaySearchResultsToCustomer(message_raw, search_result)
+                displaySearchResultsToCustomer(message_raw, search_result, textmessage.from_number)
                 if search_result
                 else "Thank you for your message. We will get back to you soon."
             )
@@ -101,7 +106,7 @@ def textMessageReceived(request):
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
-                displaySearchResultsToCustomer(message_raw, search_result)
+                displaySearchResultsToCustomer(message_raw, search_result, textmessage.from_number)
                 if search_result
                 else "Thank you for your message. We will get back to you soon."
             )
@@ -117,52 +122,55 @@ def textMessageReceived(request):
 
     return HttpResponse(str(response), content_type="application/xml")
 
-# Not for production use
-@require_POST
-@csrf_exempt
-def whatsappMessageReceived(request):
-    data = request.POST  # Parse the POST data from the request body
-    # Create and save a new WhatsAppMessage instance
-    whatsapp_message = WhatsAppMessage(
-        sms_message_sid=data.get("SmsMessageSid"),
-        num_media=data.get("NumMedia"),
-        profile_name=data.get("ProfileName", ""),  # Optional field
-        message_type=data.get("MessageType"),
-        sms_sid=data.get("SmsSid"),
-        wa_id=data.get("WaId"),
-        sms_status=data.get("SmsStatus"),
-        body=data.get("Body"),
-        to_number=data.get("To"),
-        num_segments=data.get("NumSegments"),
-        referral_num_media=data.get("ReferralNumMedia", ""),  # Optional field
-        message_sid=data.get("MessageSid"),
-        account_sid=data.get("AccountSid"),
-        from_number=data.get("From"),
-        api_version=data.get("ApiVersion"),
-    )
-    whatsapp_message.save()
 
-    if data.get("MessageStatus") == "received":
 
-        response = MessagingResponse()
-        message_raw = data.get("Body", "")
-        search_result = getTextMessageBuildingSearchResponse(message_raw)
 
-        if search_result:
-            response_text = displaySearchResultsToCustomer(message_raw, search_result)
-            response.append(Message(body=response_text))
+# # Not for production use
+# @require_POST
+# @csrf_exempt
+# def whatsappMessageReceived(request):
+#     data = request.POST  # Parse the POST data from the request body
+#     # Create and save a new WhatsAppMessage instance
+#     whatsapp_message = WhatsAppMessage(
+#         sms_message_sid=data.get("SmsMessageSid"),
+#         num_media=data.get("NumMedia"),
+#         profile_name=data.get("ProfileName", ""),  # Optional field
+#         message_type=data.get("MessageType"),
+#         sms_sid=data.get("SmsSid"),
+#         wa_id=data.get("WaId"),
+#         sms_status=data.get("SmsStatus"),
+#         body=data.get("Body"),
+#         to_number=data.get("To"),
+#         num_segments=data.get("NumSegments"),
+#         referral_num_media=data.get("ReferralNumMedia", ""),  # Optional field
+#         message_sid=data.get("MessageSid"),
+#         account_sid=data.get("AccountSid"),
+#         from_number=data.get("From"),
+#         api_version=data.get("ApiVersion"),
+#     )
+#     whatsapp_message.save()
 
-        else:
-            response.append(
-                Message(
-                    body="Hello! Thanks for your message. We will get back to you soon."
-                )
-            )
+#     if data.get("MessageStatus") == "received":
 
-        return HttpResponse(str(response), content_type="application/xml")
+#         response = MessagingResponse()
+#         message_raw = data.get("Body", "")
+#         search_result = getTextMessageBuildingSearchResponse(message_raw)
 
-    else:
-        return HttpResponse(status=200)
+#         if search_result:
+#             response_text = displaySearchResultsToCustomer(message_raw, search_result)
+#             response.append(Message(body=response_text))
+
+#         else:
+#             response.append(
+#                 Message(
+#                     body="Hello! Thanks for your message. We will get back to you soon."
+#                 )
+#             )
+
+#         return HttpResponse(str(response), content_type="application/xml")
+
+#     else:
+#         return HttpResponse(status=200)
 
 
 @csrf_exempt

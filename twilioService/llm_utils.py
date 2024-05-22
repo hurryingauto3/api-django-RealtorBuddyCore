@@ -10,7 +10,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field, validator
 
-from APIRealtorBuddyCore.config import SLACK_BA_TOKEN
+from slackService.utils import validateBuildingDataFromSlack
 
 logger = logging.getLogger(__name__)
 
@@ -142,101 +142,116 @@ def generateRelevantBuildingData(user_query, search_results) -> int:
 
     return None
 
+
 def get_building_data(building_id):
     """Fetch building data from the API."""
-    response = requests.get(f"http://127.0.0.1:8000/buildings/api/{building_id}/?format=json")
+    response = requests.get(
+        f"http://127.0.0.1:8000/buildings/api/{building_id}/?format=json"
+    )
     if response.status_code == 200:
         return response.json()
     else:
-        logger.error(f"Failed to fetch building data for ID {building_id}, status code {response.status_code}")
+        logger.error(
+            f"Failed to fetch building data for ID {building_id}, status code {response.status_code}"
+        )
         return None
+
 
 def format_date(date_string):
     """Convert ISO datetime string to formatted date."""
     date_only = date_string.split("T")[0]
     return datetime.datetime.strptime(date_only, "%Y-%m-%d").date()
 
-def get_cooperation_message(building_name, cooperation, cooperation_percentage, address, last_update, needs_update):
+
+def get_cooperation_message(
+    building_name,
+    cooperation,
+    cooperation_percentage,
+    address,
+    last_update,
+    needs_update,
+):
     """Generate the cooperation status message based on the building data."""
-    update_message = " We'll confirm again and let you know if anything's changed. " if needs_update else ""
+    update_message = (
+        " We'll confirm again and let you know if anything's changed. "
+        if needs_update
+        else ""
+    )
     if cooperation:
-        cooperation_text = f"cooperates at {cooperation_percentage}%" if cooperation_percentage else "cooperates"
-        update_message = " We'll get back to you with the cooperation percentage soon. " if not cooperation_percentage else update_message
+        cooperation_text = (
+            f"cooperates at {cooperation_percentage}%"
+            if cooperation_percentage
+            else "cooperates"
+        )
+        update_message = (
+            " We'll get back to you with the cooperation percentage soon. "
+            if not cooperation_percentage
+            else update_message
+        )
         return f"Hey, the {building_name} {cooperation_text}. It's located at {address}, and our last update for this is {last_update}.{update_message} Feel free to ask us anything else!"
     else:
         return f"Hey, this building does not cooperate with locators at the moment. We checked this last at {last_update}.{update_message} Do you have other buildings you'd like us to check?"
 
-def displaySearchResultsToCustomer(user_query, search_results):
+
+def displaySearchResultsToCustomer(user_query, search_results, from_number):
     building_id = generateRelevantBuildingData(user_query, search_results)
-    
+
     building_data = get_building_data(building_id)
     if not building_data:
         return "We're having trouble retrieving the building details right now. Please try again later."
-    
+
     building_name = building_data.get("name")
     address = building_data.get("address")
     last_update = format_date(building_data["updated_at"])
-    
+
     cooperation_info = building_data.get("cooperation", [{}])[0]
     cooperation = cooperation_info.get("cooperate")
     cooperation_percentage = cooperation_info.get("cooperation_percentage")
-    
+
     needs_update = False
     # Check if the data is older than 30 days to validate from slack
     if datetime.datetime.now().date() - last_update > datetime.timedelta(days=15):
-        validate_building_data_from_slack(building_id, building_name, user_query)
+        validateBuildingDataFromSlack(
+            building_id, building_name, user_query, from_number
+        )
         needs_update = True
-    
-    return get_cooperation_message(building_name, cooperation, cooperation_percentage, address, last_update, needs_update)
 
-def validate_building_data_from_slack(
-    building_id,
-    building_name,
-    user_query,
-):
-
-    building_url = (
-        f"https://80dd-39-51-66-137.ngrok-free.app/buildings/api/{building_id}"
+    return get_cooperation_message(
+        building_name,
+        cooperation,
+        cooperation_percentage,
+        address,
+        last_update,
+        needs_update,
     )
-    url = "https://slack.com/api/chat.postMessage"
-    payload = {
-        "channel": "C0740BAAF0E",
-        "blocks": [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"A client is requesting information for *<{building_url}|{building_name}>.* Update any information if necessary and confirm.",
-                },
-            },
-            {
-                "type": "section",
-                "fields": [{"type": "mrkdwn", "text": f'*Message:*\n"{user_query}"'}],
-            },
-            {
-                "type": "actions",
-                "elements": [
-                    {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "emoji": True,
-                            "text": "Updated",
-                        },
-                        "style": "primary",
-                        "value": "click_me_123",
-                    }
-                ],
-            },
-        ]
-    }
 
-    headers = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + SLACK_BA_TOKEN,
-    }
 
-    r = requests.post(url, json=payload, headers=headers)
-    
-    if r.status_code == 200:
-        return True
+def getUpdatedBuildingInformation(building_id):
+
+    building_data = get_building_data(building_id=building_id)
+
+    if not building_data:
+        return "We're having trouble retrieving the building details right now. Please try again later."
+
+    building_name = building_data.get("name")
+    address = building_data.get("address")
+    last_update = format_date(building_data["updated_at"])
+
+    cooperation_info = building_data.get("cooperation", [{}])[0]
+    cooperation = cooperation_info.get("cooperate")
+    cooperation_percentage = cooperation_info.get("cooperation_percentage")
+
+    if cooperation:
+        cooperation_text = (
+            f"cooperates at {cooperation_percentage}%"
+            if cooperation_percentage
+            else "cooperates"
+        )
+        update_message = (
+            " We'll get back to you with the cooperation percentage soon. "
+            if not cooperation_percentage
+            else update_message
+        )
+        return f"Hey, you recently requested information on the {building_name}. Here's the updated information: It {cooperation_text}. It's located at {address}, and our last update for this is {last_update}. Feel free to ask us anything else!"
+    else:
+        return f"Hey, you recently requested information on the {building_name}. This building does not cooperate with locators at the moment. We checked this last at {last_update}. Do you have other buildings you'd like us to check?"
