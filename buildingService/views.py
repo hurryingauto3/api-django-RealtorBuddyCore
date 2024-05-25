@@ -17,8 +17,8 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from .utils import update_address_abbreviations
-from .serializers import BuildingSerializer
-from .models import Building, AddressAbbreviation, Cooperation, normalize_address
+from .serializers import BuildingSerializer, CooperationHistorySerializer
+from .models import Building, AddressAbbreviation, Cooperation, normalize_address, CooperationHistory
 
 from .tasks import processBuildingDataBatch
 
@@ -121,7 +121,12 @@ def is_address(query):
     address_pattern = r"\d+\s+\w+\s+\w+(\s+\w+)?(,\s+\w+)?"
     return bool(re.match(address_pattern, query))
 
-
+class CooperationHistoryViewSet(viewsets.ReadOnlyModelViewSet):  # if only read operations are needed
+    serializer_class = CooperationHistorySerializer
+    def get_queryset(self):
+        cooperation_id = self.kwargs['cooperation_id']
+        return CooperationHistory.objects.filter(cooperation__id=cooperation_id)
+    
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all().prefetch_related("cooperation")
     serializer_class = BuildingSerializer

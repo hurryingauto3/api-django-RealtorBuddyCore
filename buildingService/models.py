@@ -225,10 +225,36 @@ class Building(models.Model):
 class Cooperation(models.Model):
     id = models.AutoField(primary_key=True)
     created_at = models.DateTimeField(default=now)
-    building = models.ForeignKey(
-        Building, on_delete=models.CASCADE, related_name="cooperation"
-    )
-    title = models.TextField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    # building = models.ForeignKey(
+    #     Building, on_delete=models.CASCADE, related_name="cooperation"
+    # )
+    building = models.OneToOneField(Building, on_delete=models.CASCADE, related_name='cooperation')
+    # title = models.TextField(null=True, blank=True)
     cooperate = models.BooleanField(default=False, null=True, blank=True)
     cooperation_fixed = models.IntegerField(null=True, blank=True)
     cooperation_percentage = models.IntegerField(null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if self.pk is not None:  # Checks if the instance already exists
+            CooperationHistory.objects.create(
+                cooperation=self,
+                cooperate=self.cooperate,
+                cooperation_fixed=self.cooperation_fixed,
+                cooperation_percentage=self.cooperation_percentage
+            )
+        super().save(*args, **kwargs)
+    
+class CooperationHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    cooperation = models.ForeignKey(Cooperation, on_delete=models.CASCADE, related_name='history')
+    updated_at = models.DateTimeField(auto_now_add=True)
+    cooperate = models.BooleanField(default=False)
+    cooperation_fixed = models.IntegerField(null=True, blank=True)
+    cooperation_percentage = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at']  # Orders the history entries by most recent
+
+    def __str__(self):
+        return f"History for {self.cooperation} at {self.updated_at}"

@@ -7,8 +7,8 @@ from . import (
 # DRF router for API endpoints
 router = DefaultRouter()
 router.register(
-    r"api", views.BuildingViewSet
-)  # Update with the correct viewset if necessary
+    r"building", views.BuildingViewSet
+)  # This registers the BuildingViewSet under the 'buildings' endpoint
 
 urlpatterns = [
     path(
@@ -21,7 +21,10 @@ urlpatterns = [
     ),
     path("normalizeAddress/", views.getNormalizedAddress, name="normalizeAddress"),
     # DRF API URLs
+    path("", include(router.urls)),  # Includes the router's URLs into the project
     path(
-        "", include(router.urls)
-    ),  # This includes router generated URL patterns for the API
+        "cooperation/<int:cooperation_id>/",
+        views.CooperationHistoryViewSet.as_view({"get": "list"}),
+        name="cooperation",
+    ),
 ]
