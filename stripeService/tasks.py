@@ -11,7 +11,7 @@ from celery import shared_task
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="handlePaymentIntentEvent", queue="stripeService")
+@shared_task(name="handlePaymentIntentEvent")
 def handlePaymentIntentEvent(event):
     """
     Handles the payment intent event such as payment_intent.succeeded, payment_intent.created, payment_intent.canceled, etc.
@@ -61,7 +61,7 @@ def handlePaymentIntentEvent(event):
     )
 
 
-@shared_task(name="handleCustomerEvent", queue="stripeService")
+@shared_task(name="handleCustomerEvent")
 def handleCustomerEvent(event):
     """
     Handles the customer event such as customer.created, customer.updated.
@@ -89,7 +89,7 @@ def handleCustomerEvent(event):
     )
 
 
-@shared_task(name="handleInvoiceEvent", queue="stripeService")
+@shared_task(name="handleInvoiceEvent")
 def handleInvoiceEvent(event):
     """
     Handles the invoice event such as invoice.created, invoice.updated, invoice.payment_succeeded, etc.
@@ -128,7 +128,7 @@ def handleInvoiceEvent(event):
     )
 
 
-@shared_task(name="handleSubscriptionEvent", queue="stripeService")
+@shared_task(name="handleSubscriptionEvent")
 def handleSubscriptionEvent(event):
     """
     Handles the subscription event such as customer.subscription.created, customer.subscription.updated, etc.

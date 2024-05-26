@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="processBuildingDataBatch", queue="buildingService")
+@shared_task(name="processBuildingDataBatch")
 def processBuildingDataBatch(rows, batch, num_batches):
     cooperation_batch_data = []
     building_batch_data = []

@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Customer(models.Model):
     stripe_customer_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -18,8 +17,6 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name if self.name else self.stripe_customer_id
-
-
 class PaymentIntent(models.Model):
     stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(
@@ -61,7 +58,6 @@ class Subscription(models.Model):
 
     def __str__(self):
         return self.stripe_subscription_id
-
 
 class Invoice(models.Model):
     stripe_invoice_id = models.CharField(max_length=255, unique=True)

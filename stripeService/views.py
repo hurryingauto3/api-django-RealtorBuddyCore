@@ -4,7 +4,12 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db import transaction
-from .tasks import *
+from .tasks import (
+    handleCustomerEvent,
+    handleInvoiceEvent,
+    handlePaymentIntentEvent,
+    handleSubscriptionEvent,
+)
 from .models import StripeEvent  # This would be a new model to track processed events
 from APIRealtorBuddyCore.config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET
 

@@ -25,6 +25,8 @@ from .config import (
     TWILIO_ACCOUNT_SID_,
     TWILIO_AUTH_TOKEN_,
     TWILIO_NUMBER_,
+    G_CLIENT_ID,
+    G_CLIENT_SECRET,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -118,8 +120,8 @@ SOCIALACCOUNT_PROVIDERS = {
             "access_type": "online",
         },
         "APP": {
-            "client_id": "290612555837-ns0g19p298he16831squpgudr1e7hkad.apps.googleusercontent.com",
-            "secret": "MNpOdutoLX_0NkF5J62zLBhnbB3A",
+            "client_id": G_CLIENT_ID,
+            "secret": G_CLIENT_SECRET,
         },
         "EMAIL_AUTHENTICATION": True,
     }
@@ -166,14 +168,7 @@ DATABASES = {
         "HOST": DATABASE_HOST,
         "PORT": DATABASE_PORT,
     },
-    # 'production': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'd4hj1n4j0e',
-    #     'USER': 'd4hj1n4j0e',
-    #     'PASSWORD': 'd4hj1n4j0e',
-    #     'HOST': 'd4hj1n4j0e.db.elephantsql.com',
-    #     'PORT': '5432',
-    # }
+
 }
 
 # Password validation

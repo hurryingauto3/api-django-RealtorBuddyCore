@@ -13,6 +13,8 @@ TWILIO_NUMBER_ = os.getenv("TWILIO_NUMBER")
 STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 SLACK_BA_TOKEN = os.getenv('SLACK_BA_TOKEN')
+G_CLIENT_ID = os.getenv('G_CLIENT_ID')
+G_CLIENT_SECRET = os.getenv('G_CLIENT_SECRET')
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -25,3 +27,4 @@ DATABASE_PORT = DATABASE_URL.split("@")[1].split(":")[1].split("/")[0]
 # Celery configuration
 CELERY_BROKER_URL_ = os.getenv("REDIS_URL")
 CELERY_RESULT_BACKEND_ = os.getenv("REDIS_URL")
+
