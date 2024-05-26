@@ -27,6 +27,7 @@ from .config import (
     TWILIO_NUMBER_,
     G_CLIENT_ID,
     G_CLIENT_SECRET,
+    DEBUG_,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,13 +40,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-&s5pkr1ftwa=td-ollnfus&86)av$+6tszmw6*p04-^v@)x+wi"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(DEBUG_)
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
-    "978a-39-51-66-137.ngrok-free.app",
-    "6494-39-51-66-137.ngrok-free.app",
-    "2e0a-39-51-66-137.ngrok-free.app",
+    "ec2-44-204-125-61.compute-1.amazonaws.com"
 ]
 
 INTERNAL_IPS = [

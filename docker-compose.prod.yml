@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  redis_realtorbuddycore:
+    container_name: redis_realtorbuddycore
+    image: redis:latest
+    restart: always
+
+  api-realtorbuddycore:
+    container_name: api-realtorbuddycore
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: gunicorn APIRealtorBuddyCore.wsgi:application --bind 0.0.0.0:8000 --workers 4
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=0  # Make sure debug is turned off in production
+    restart: unless-stopped
+    depends_on:
+      - redis_realtorbuddycore
+
+  worker-realtorbuddycore:
+    container_name: worker-realtorbuddycore
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: celery -A APIRealtorBuddyCore worker --loglevel=info  --concurrency=1
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=0
+    restart: unless-stopped
+    depends_on:
+      - api-realtorbuddycore
+      - redis_realtorbuddycore
+
+  beat-realtorbuddycore:
+    container_name: beat-realtorbuddycore
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    command: celery -A APIRealtorBuddyCore beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=0
+    restart: unless-stopped
+    depends_on:
+      - api-realtorbuddycore
+      - redis_realtorbuddycore
+
+volumes:
+  pgdata:

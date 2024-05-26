@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+DEBUG_ = os.getenv("DEBUG")
+
 # External API configuration
 FUB_API = os.getenv("FUB_API")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
