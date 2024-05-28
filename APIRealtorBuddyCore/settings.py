@@ -28,6 +28,7 @@ from .config import (
     G_CLIENT_ID,
     G_CLIENT_SECRET,
     DEBUG_,
+    ALLOWED_HOSTS_
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,16 +43,8 @@ SECRET_KEY = "django-insecure-&s5pkr1ftwa=td-ollnfus&86)av$+6tszmw6*p04-^v@)x+wi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(DEBUG_)
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "ec2-44-204-125-61.compute-1.amazonaws.com"
-]
-
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
-
-
+ALLOWED_HOSTS = ALLOWED_HOSTS_.split(",")
+    
 # Celery Configuration
 if urlparse(CELERY_BROKER_URL_).scheme == "rediss":
     CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": ssl.CERT_NONE}

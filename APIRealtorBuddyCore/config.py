@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEBUG_ = os.getenv("DEBUG")
+ALLOWED_HOSTS_ = os.getenv("ALLOWED_HOSTS")
 
 # External API configuration
 FUB_API = os.getenv("FUB_API")
