@@ -29,7 +29,7 @@ def getTextMessageBuildingSearchResponse(message_body):
         return None
 
     search_url = (
-        "http://127.0.0.1:8000/buildings/api"  # Adjust your search API URL accordingly
+        "http://127.0.0.1:8000/buildings/building"  # Adjust your search API URL accordingly
     )
     params = {"search": message_body, "format": "json"}
     response = requests.get(search_url, params=params, timeout=10)
