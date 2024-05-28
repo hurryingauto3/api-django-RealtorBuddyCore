@@ -2,15 +2,12 @@ version: '3.8'
 
 services:
   redis_realtorbuddycore:
+    container_name: redis_realtorbuddycore
     image: redis:latest
     restart: always
-    deploy:
-      replicas: 1
-      update_config:
-        parallelism: 1
-        delay: 10s
 
   api-realtorbuddycore:
+    container_name: api-realtorbuddycore
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -23,21 +20,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=0
+      - DEBUG=0  # Ensure debug is turned off in production
     restart: always
     depends_on:
       - redis_realtorbuddycore
-    deploy:
-      update_config:
-        parallelism: 2
-        delay: 10s
-        order: start-first
+      
 
   worker-realtorbuddycore:
+    container_name: worker-realtorbuddycore
     build:
       context: .
       dockerfile: Dockerfile.prod
-    command: celery -A APIRealtorBuddyCore worker --loglevel=info --concurrency=1
+    command: celery -A APIRealtorBuddyCore worker --loglevel=info  --concurrency=1
     volumes:
       - .:/app
     environment:
@@ -46,13 +40,9 @@ services:
     depends_on:
       - api-realtorbuddycore
       - redis_realtorbuddycore
-    deploy:
-      update_config:
-        parallelism: 2
-        delay: 10s
-        order: start-first
 
   beat-realtorbuddycore:
+    container_name: beat-realtorbuddycore
     build:
       context: .
       dockerfile: Dockerfile.prod
