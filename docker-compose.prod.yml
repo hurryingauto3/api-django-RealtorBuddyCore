@@ -17,6 +17,8 @@ services:
             gunicorn APIRealtorBuddyCore.wsgi:application --bind 0.0.0.0:8000 --workers 4"
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
     environment:
       - DEBUG=0  # Ensure debug is turned off in production
     restart: always
