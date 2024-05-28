@@ -19,7 +19,7 @@ services:
       - .:/app
     environment:
       - DEBUG=0  # Ensure debug is turned off in production
-    restart: unless-stopped
+    restart: always
     depends_on:
       - redis_realtorbuddycore
 
@@ -33,7 +33,7 @@ services:
       - .:/app
     environment:
       - DEBUG=0
-    restart: unless-stopped
+    restart: always
     depends_on:
       - api-realtorbuddycore
       - redis_realtorbuddycore
@@ -48,7 +48,7 @@ services:
       - .:/app
     environment:
       - DEBUG=0
-    restart: unless-stopped
+    restart: always
     depends_on:
       - api-realtorbuddycore
       - redis_realtorbuddycore
