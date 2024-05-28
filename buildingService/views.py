@@ -18,7 +18,13 @@ from rest_framework.pagination import PageNumberPagination
 
 from .utils import update_address_abbreviations
 from .serializers import BuildingSerializer, CooperationHistorySerializer
-from .models import Building, AddressAbbreviation, Cooperation, normalize_address, CooperationHistory
+from .models import (
+    Building,
+    AddressAbbreviation,
+    Cooperation,
+    normalize_address,
+    CooperationHistory,
+)
 
 from .tasks import processBuildingDataBatch
 
@@ -30,7 +36,7 @@ def index(request):
 
 
 def convertAndInsertBuildingData(request):
-    df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
+    df = pd.read_csv("/app/buildings_info.csv", low_memory=True)
     batch_size = 1000
     total_rows = len(df)
     # num_batches = (total_rows + batch_size - 1) // batch_size
@@ -42,7 +48,7 @@ def convertAndInsertBuildingData(request):
         end_index = min((batch + 1) * batch_size, total_rows)
 
         rows = df.iloc[start_index:end_index].to_dict(orient="records")
-        process = processBuildingDataBatch(rows, batch, num_batches)
+        process = processBuildingDataBatch.delay(rows, batch, num_batches)
         logger.info(
             f"Processing batch {batch+1} of {num_batches} with {len(rows)} rows"
         )
@@ -53,6 +59,7 @@ def convertAndInsertBuildingData(request):
                 "batch": batch + 1,
                 "start_index": start_index,
                 "end_index": end_index,
+                "process_id": process.id,
             }
         )
 
@@ -121,12 +128,17 @@ def is_address(query):
     address_pattern = r"\d+\s+\w+\s+\w+(\s+\w+)?(,\s+\w+)?"
     return bool(re.match(address_pattern, query))
 
-class CooperationHistoryViewSet(viewsets.ReadOnlyModelViewSet):  # if only read operations are needed
+
+class CooperationHistoryViewSet(
+    viewsets.ReadOnlyModelViewSet
+):  # if only read operations are needed
     serializer_class = CooperationHistorySerializer
+
     def get_queryset(self):
-        cooperation_id = self.kwargs['cooperation_id']
+        cooperation_id = self.kwargs["cooperation_id"]
         return CooperationHistory.objects.filter(cooperation__id=cooperation_id)
-    
+
+
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all().prefetch_related("cooperation")
     serializer_class = BuildingSerializer
