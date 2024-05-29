@@ -226,11 +226,7 @@ class Cooperation(models.Model):
     id = models.AutoField(primary_key=True)
     created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
-    # building = models.ForeignKey(
-    #     Building, on_delete=models.CASCADE, related_name="cooperation"
-    # )
     building = models.OneToOneField(Building, on_delete=models.CASCADE, related_name='cooperation')
-    # title = models.TextField(null=True, blank=True)
     cooperate = models.BooleanField(default=False, null=True, blank=True)
     cooperation_fixed = models.IntegerField(null=True, blank=True)
     cooperation_percentage = models.IntegerField(null=True, blank=True)

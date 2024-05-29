@@ -30,80 +30,60 @@ def processBuildingData():
 def processBuildingDataBatch(rows, batch, num_batches):
     logger.info(f"Processing batch {batch + 1} of {num_batches}...")
     cooperation_batch_data = []
-    building_batch_data = []
+    building_instances = []
+
     for row in rows:
-        building_data = {
-            "name": row["name"] if pd.notnull(row["name"]) else None,
-            "address": row["address"] if pd.notnull(row["address"]) else None,
-            "city": row["city"] if pd.notnull(row["city"]) else None,
-            "state": row["state"] if pd.notnull(row["state"]) else None,
-            "description": (
-                row["description"] if pd.notnull(row["description"]) else None
-            ),
-            "latitude": row["lat"] if pd.notnull(row["lat"]) else None,
-            "longitude": row["lng"] if pd.notnull(row["lng"]) else None,
-            "zip": row["zip"] if pd.notnull(row["zip"]) else None,
-            "website": row["website"] if pd.notnull(row["website"]) else None,
-            "phone": row["phone"] if pd.notnull(row["phone"]) else None,
-            "neighborhood": (
-                row["neighborhood_name"]
-                if pd.notnull(row["neighborhood_name"])
-                else None
-            ),
-            # Add other building fields as needed
-        }
-
-        cooperation_data = {
-            "cooperate": row["cooperate"] if pd.notnull(row["cooperate"]) else None,
-            "cooperation_fixed": (
-                row["cooperation_fixed"]
-                if pd.notnull(row["cooperation_fixed"])
-                else None
-            ),
-            "cooperation_percentage": (
-                row["cooperation_percentage"]
-                if pd.notnull(row["cooperation_percentage"])
-                else None
-            ),
-        }
-
         try:
+            building_data = {
+                "name": row["name"],
+                "address": row["address"],
+                "city": row["city"],
+                "state": row["state"],
+                "description": row["description"],
+                "latitude": row["lat"],
+                "longitude": row["lng"],
+                "zip": row["zip"],
+                "website": row["website"],
+                "phone": row["phone"],
+                "neighborhood": row["neighborhood_name"],
+            }
+
             building_serializer = BuildingSerializer(data=building_data)
-            cooperation_serializer = CooperationSerializer(data=cooperation_data)
-
-            if not building_serializer.is_valid():
-                logger.error(
-                    f"Building data validation failed for row {row}: {building_serializer.errors}"
-                )
-            else:
+            if building_serializer.is_valid():
                 building = building_serializer.save()
-                building_batch_data.append(building)
-
-            if not cooperation_serializer.is_valid():
-                logger.error(
-                    f"Cooperation data validation failed for row {row}: {cooperation_serializer.errors}"
-                )
+                building_instances.append(building)
             else:
-                cooperation_batch_data.append(cooperation_serializer.validated_data)
+                logger.error(
+                    f"Building data validation failed: {building_serializer.errors}"
+                )
+                continue  # Skip this building and its associated cooperation if building fails
 
-        except Exception:
-            logger.error(f"Error processing row {row}")
+            cooperation_data = {
+                "building": building.id,  # Link the building ID here
+                "cooperate": row.get("cooperate"),
+                "cooperation_fixed": row.get("cooperation_fixed"),
+                "cooperation_percentage": row.get("cooperation_percentage"),
+            }
 
+            cooperation_serializer = CooperationSerializer(data=cooperation_data)
+            if cooperation_serializer.is_valid():
+                cooperation = cooperation_serializer.save()
+                cooperation_batch_data.append(cooperation)
+            else:
+                logger.error(
+                    f"Cooperation data validation failed: {cooperation_serializer.errors}"
+                )
+
+        except Exception as e:
+            logger.error(f"Error processing row: {str(e)}")
     try:
         with transaction.atomic():
-            # Process building and cooperation data here
-            buildings = Building.objects.bulk_create(
-                building_batch_data, ignore_conflicts=True
+            # Since buildings are already saved, you only need to save the cooperation batch
+            Cooperation.objects.bulk_create(
+                cooperation_batch_data, ignore_conflicts=True
             )
-            cooperations = [
-                Cooperation(building=building, **data)
-                for building, data in zip(buildings, cooperation_batch_data)
-            ]
-            Cooperation.objects.bulk_create(cooperations)
             logger.info(
                 f"Transaction successful for batch {batch + 1} of {num_batches}"
             )
     except Exception as e:
-        logger.error(
-            f"Transaction failed for batch {batch + 1} of {num_batches}: {str(e)}"
-        )
+        logger.error(f"Transaction failed: {str(e)}")
