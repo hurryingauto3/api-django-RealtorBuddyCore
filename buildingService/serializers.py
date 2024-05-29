@@ -16,7 +16,7 @@ class CooperationHistorySerializer(serializers.ModelSerializer):
         fields = ['cooperate', 'cooperation_fixed', 'cooperation_percentage', 'updated_at']
 
 class BuildingSerializer(serializers.ModelSerializer):
-    cooperation = CooperationSerializer()# Make the cooperation field optional
+    cooperation = CooperationSerializer(required=False)  # Make the cooperation field optional
 
     class Meta:
         model = Building
