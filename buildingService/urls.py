@@ -11,9 +11,9 @@ router.register(
 )  # This registers the BuildingViewSet under the 'buildings' endpoint
 
 urlpatterns = [
-    # path(
-    #     "updateAddressAbr/", views.updateAddressAbbreviations, name="updateAddressAbr`"
-    # ),
+    path(
+        "updateAddressAbr/", views.updateAddressAbbreviations, name="updateAddressAbr`"
+    ),
     path(
         "convertAndInsertBuildingData/",
         views.convertAndInsertBuildingData,
