@@ -70,11 +70,11 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "corsheaders",
     "rest_framework",
-    "rest_framework_api_key",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
+    # "rest_framework_api_key",
+    # "allauth",
+    # "allauth.account",
+    # "allauth.socialaccount",
+    # "allauth.socialaccount.providers.google",
     "buildingService",
     "twilioService",
     "stripeService",
@@ -90,7 +90,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # Moved up
-    "allauth.account.middleware.AccountMiddleware",
+    # "allauth.account.middleware.AccountMiddleware",
 ]
 
 # REST_FRAMEWORK = {
@@ -99,31 +99,31 @@ MIDDLEWARE = [
 #     ]
 # }
 
-SITE_ID = 1
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/buildings"  # Adjust to your redirect URL
+# SITE_ID = 1
+# LOGIN_URL = "/accounts/login/"
+# LOGIN_REDIRECT_URL = "/buildings"  # Adjust to your redirect URL
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
-]
+# AUTHENTICATION_BACKENDS = [
+#     "django.contrib.auth.backends.ModelBackend",
+#     "allauth.account.auth_backends.AuthenticationBackend",
+# ]
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "APP": {
-            "client_id": G_CLIENT_ID,
-            "secret": G_CLIENT_SECRET,
-        },
-        "EMAIL_AUTHENTICATION": True,
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         "SCOPE": [
+#             "profile",
+#             "email",
+#         ],
+#         "AUTH_PARAMS": {
+#             "access_type": "online",
+#         },
+#         "APP": {
+#             "client_id": G_CLIENT_ID,
+#             "secret": G_CLIENT_SECRET,
+#         },
+#         "EMAIL_AUTHENTICATION": True,
+#     }
+# }
 
 
 CORS_ALLOW_ALL_ORIGINS = False  # Switch to False if specifying allowed origins

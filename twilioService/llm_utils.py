@@ -146,7 +146,8 @@ def generateRelevantBuildingData(user_query, search_results) -> int:
 def get_building_data(building_id):
     """Fetch building data from the API."""
     response = requests.get(
-        f"http://127.0.0.1:8000/buildings/api/{building_id}/?format=json"
+        f"http://127.0.0.1:8000/buildings/building/{building_id}/?format=json",
+        timeout=30,
     )
     if response.status_code == 200:
         return response.json()

@@ -52,36 +52,33 @@ def processBuildingDataBatch(rows, batch, num_batches):
             if building_serializer.is_valid():
                 building = building_serializer.save()
                 building_instances.append(building)
+
+                # Process Cooperation after building is successfully saved
+                cooperation_data = {
+                    "cooperate": row.get("cooperate"),
+                    "cooperation_fixed": row.get("cooperation_fixed"),
+                    "cooperation_percentage": row.get("cooperation_percentage"),
+                }
+                cooperation_serializer = CooperationSerializer(data=cooperation_data)
+                if cooperation_serializer.is_valid():
+                    cooperation = cooperation_serializer.save(building=building)
+                    cooperation_batch_data.append(cooperation)
+                else:
+                    logger.error(
+                        f"Cooperation data validation failed: {cooperation_serializer.errors}"
+                    )
             else:
                 logger.error(
                     f"Building data validation failed: {building_serializer.errors}"
                 )
-                continue  # Skip this building and its associated cooperation if building fails
-
-            cooperation_data = {
-                "building": building.id,  # Link the building ID here
-                "cooperate": row.get("cooperate"),
-                "cooperation_fixed": row.get("cooperation_fixed"),
-                "cooperation_percentage": row.get("cooperation_percentage"),
-            }
-
-            cooperation_serializer = CooperationSerializer(data=cooperation_data)
-            if cooperation_serializer.is_valid():
-                cooperation = cooperation_serializer.save()
-                cooperation_batch_data.append(cooperation)
-            else:
-                logger.error(
-                    f"Cooperation data validation failed: {cooperation_serializer.errors}"
-                )
+                continue
 
         except Exception as e:
             logger.error(f"Error processing row: {str(e)}")
+
     try:
         with transaction.atomic():
-            # Since buildings are already saved, you only need to save the cooperation batch
-            Cooperation.objects.bulk_create(
-                cooperation_batch_data, ignore_conflicts=True
-            )
+            # Since buildings and cooperation are saved, no need to save again, just log success
             logger.info(
                 f"Transaction successful for batch {batch + 1} of {num_batches}"
             )
