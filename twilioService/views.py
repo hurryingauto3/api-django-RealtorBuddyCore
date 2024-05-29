@@ -63,17 +63,28 @@ def textMessageReceived(request):
 
     try:
         stripe_customer = Customer.objects.get(phone=textmessage.from_number)
-        stripe_subscription = Subscription.objects.get(customer=stripe_customer)
+        stripe_subscription = (
+            Subscription.objects.get(customer=stripe_customer)
+            if stripe_customer
+            else None
+        )
 
         # Check if the subscription is active or has been canceled but the period has not ended yet
-        if stripe_subscription.status == "active" or (
-            stripe_subscription.cancel_at_period_end
-            and datetime.datetime.now() <= stripe_subscription.current_period_end
+        if (
+            stripe_subscription
+            and stripe_subscription.status == "active"
+            or (
+                stripe_subscription
+                and stripe_subscription.cancel_at_period_end
+                and datetime.datetime.now() <= stripe_subscription.current_period_end
+            )
         ):
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
-                displaySearchResultsToCustomer(message_raw, search_result, textmessage.from_number)
+                displaySearchResultsToCustomer(
+                    message_raw, search_result, textmessage.from_number
+                )
                 if search_result
                 else "Thank you for your message. We will get back to you soon."
             )
@@ -106,7 +117,9 @@ def textMessageReceived(request):
             message_raw = textmessage.body
             search_result = getTextMessageBuildingSearchResponse(message_raw)
             response_text = (
-                displaySearchResultsToCustomer(message_raw, search_result, textmessage.from_number)
+                displaySearchResultsToCustomer(
+                    message_raw, search_result, textmessage.from_number
+                )
                 if search_result
                 else "Thank you for your message. We will get back to you soon."
             )
@@ -121,8 +134,6 @@ def textMessageReceived(request):
             )
 
     return HttpResponse(str(response), content_type="application/xml")
-
-
 
 
 # # Not for production use

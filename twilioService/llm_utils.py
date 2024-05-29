@@ -195,37 +195,44 @@ def get_cooperation_message(
 
 
 def displaySearchResultsToCustomer(user_query, search_results, from_number):
-    building_id = generateRelevantBuildingData(user_query, search_results)
+    try:
+        building_id = generateRelevantBuildingData(user_query, search_results)
+        building_data = get_building_data(building_id)
+        if not building_data:
+            return "We currently do not have information on this building. We'll get back to you with the details soon."
 
-    building_data = get_building_data(building_id)
-    if not building_data:
-        return "We're having trouble retrieving the building details right now. Please try again later."
+        building_name = building_data.get("name")
+        address = building_data.get("address")
+        last_update = format_date(building_data["updated_at"])
 
-    building_name = building_data.get("name")
-    address = building_data.get("address")
-    last_update = format_date(building_data["updated_at"])
-
-    cooperation_info = building_data.get("cooperation", [{}])[0]
-    cooperation = cooperation_info.get("cooperate")
-    cooperation_percentage = cooperation_info.get("cooperation_percentage")
-
-    needs_update = False
-    # Check if the data is older than 30 days to validate from slack
-    if datetime.datetime.now().date() - last_update > datetime.timedelta(days=15):
-        validateBuildingDataFromSlack(
-            building_id, building_name, user_query, from_number
+        cooperation_info = (
+            building_data.get("cooperation")[0]
+            if building_data.get("cooperation", None)
+            else {}
         )
-        needs_update = True
+        cooperation = cooperation_info.get("cooperate", None)
+        cooperation_percentage = cooperation_info.get("cooperation_percentage", None)
 
-    return get_cooperation_message(
-        building_name,
-        cooperation,
-        cooperation_percentage,
-        address,
-        last_update,
-        needs_update,
-    )
+        needs_update = False
+        # Check if the data is older than 30 days to validate from slack
+        if datetime.datetime.now().date() - last_update > datetime.timedelta(days=15):
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number
+            )
+            needs_update = True
 
+        return get_cooperation_message(
+            building_name,
+            cooperation,
+            cooperation_percentage,
+            address,
+            last_update,
+            needs_update,
+        )
+
+    except Exception as e:
+        logger.error(f"Error displaying search results: {str(e)}")
+        return "We're having trouble retrieving the building details right now. Please try again later."
 
 def getUpdatedBuildingInformation(building_id):
 
