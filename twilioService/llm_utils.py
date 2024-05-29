@@ -167,10 +167,11 @@ def format_date(date_string):
 def get_cooperation_message(
     building_name,
     cooperation,
-    cooperation_percentage,
     address,
     last_update,
     needs_update,
+    cooperation_percentage=None,
+    cooperation_fixed=None,
 ):
     """Generate the cooperation status message based on the building data."""
     update_message = (
@@ -180,9 +181,13 @@ def get_cooperation_message(
     )
     if cooperation:
         cooperation_text = (
-            f"cooperates at {cooperation_percentage}%"
+            f"pays a {cooperation_percentage}% commission"
             if cooperation_percentage
-            else "cooperates"
+            else (
+                f"pays a fixed commission of ${cooperation_fixed}"
+                if cooperation_fixed
+                else "cooperates"
+            )
         )
         update_message = (
             " We'll get back to you with the cooperation percentage soon. "
@@ -212,6 +217,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
         )
         cooperation = cooperation_info.get("cooperate", None)
         cooperation_percentage = cooperation_info.get("cooperation_percentage", None)
+        cooeperation_fixed = cooperation_info.get("cooperation_fixed", None)
 
         needs_update = False
         # Check if the data is older than 30 days to validate from slack
@@ -221,18 +227,32 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             )
             needs_update = True
 
+        elif not cooperation:
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number
+            )
+            needs_update = True
+
+        elif not cooperation_percentage and cooeperation_fixed:
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number
+            )
+            needs_update = True
+
         return get_cooperation_message(
-            building_name,
-            cooperation,
-            cooperation_percentage,
-            address,
-            last_update,
-            needs_update,
+            building_name=building_name,
+            cooperation=cooperation,
+            address=address,
+            last_update=last_update,
+            needs_update=needs_update,
+            cooperation_percentage=cooperation_percentage,
+            cooperation_fixed=cooeperation_fixed,
         )
 
     except Exception as e:
         logger.error(f"Error displaying search results: {str(e)}")
         return "We're having trouble retrieving the building details right now. Please try again later."
+
 
 def getUpdatedBuildingInformation(building_id):
 
