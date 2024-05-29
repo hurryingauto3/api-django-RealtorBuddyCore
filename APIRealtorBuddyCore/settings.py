@@ -28,7 +28,7 @@ from .config import (
     G_CLIENT_ID,
     G_CLIENT_SECRET,
     DEBUG_,
-    ALLOWED_HOSTS_
+    ALLOWED_HOSTS_,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,7 +44,7 @@ SECRET_KEY = "django-insecure-&s5pkr1ftwa=td-ollnfus&86)av$+6tszmw6*p04-^v@)x+wi
 DEBUG = bool(DEBUG_)
 
 ALLOWED_HOSTS = ALLOWED_HOSTS_.split(",")
-    
+
 # Celery Configuration
 if urlparse(CELERY_BROKER_URL_).scheme == "rediss":
     CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": ssl.CERT_NONE}
@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "corsheaders",
     "rest_framework",
+    "rest_framework_api_key",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -92,6 +93,11 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
 ]
 
+# REST_FRAMEWORK = {
+#     "DEFAULT_PERMISSION_CLASSES": [
+#         "rest_framework_api_key.permissions.HasAPIKey",
+#     ]
+# }
 
 SITE_ID = 1
 LOGIN_URL = "/accounts/login/"
@@ -132,7 +138,9 @@ ROOT_URLCONF = "APIRealtorBuddyCore.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            os.path.join(BASE_DIR, "APIRealtorBuddyCore/templates"),
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -160,7 +168,6 @@ DATABASES = {
         "HOST": DATABASE_HOST,
         "PORT": DATABASE_PORT,
     },
-
 }
 
 # Password validation

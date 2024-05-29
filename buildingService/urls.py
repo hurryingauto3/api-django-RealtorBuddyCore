@@ -11,15 +11,16 @@ router.register(
 )  # This registers the BuildingViewSet under the 'buildings' endpoint
 
 urlpatterns = [
-    path(
-        "updateAddressAbr/", views.updateAddressAbbreviations, name="updateAddressAbr`"
-    ),
+    # path(
+    #     "updateAddressAbr/", views.updateAddressAbbreviations, name="updateAddressAbr`"
+    # ),
     path(
         "convertAndInsertBuildingData/",
         views.convertAndInsertBuildingData,
         name="convertAndInsertBuildingData",
     ),
-    path("normalizeAddress/", views.getNormalizedAddress, name="normalizeAddress"),
+    # path("normalizeAddress/", views.getNormalizedAddress, name="normalizeAddress"),
+    # path("api_key/", views.APIKeyViewSet.as_view({"get": "get"}), name="api_key"),
     # DRF API URLs
     path("", include(router.urls)),  # Includes the router's URLs into the project
     path(

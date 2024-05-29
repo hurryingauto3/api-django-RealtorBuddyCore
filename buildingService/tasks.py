@@ -7,9 +7,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+@shared_task(name="processBuildingData")
+def processBuildingData():
+        df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
+        batch_size = 1000
+        total_rows = len(df)
+        # num_batches = (total_rows + batch_size - 1) // batch_size
+        num_batches = 100
+
+        for batch in range(num_batches):
+            start_index = batch * batch_size
+            end_index = min((batch + 1) * batch_size, total_rows)
+
+            rows = df.iloc[start_index:end_index].to_dict(orient="records")
+            process = processBuildingDataBatch.delay(rows, batch, num_batches)
+            
+        return "Processing building data in batches"
 
 @shared_task(name="processBuildingDataBatch")
 def processBuildingDataBatch(rows, batch, num_batches):
+    logger.info(f"Processing batch {batch + 1} of {num_batches}...")
     cooperation_batch_data = []
     building_batch_data = []
     for row in rows:

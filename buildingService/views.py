@@ -10,12 +10,17 @@ from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 # from django.views.generic import ListView, DetailView
 # from django.contrib.postgres.search import TrigramSimilarity
 # from django.views.generic.edit import CreateView, UpdateView, DeleteView
+# from rest_framework_api_key.models import APIKey
+# from rest_framework.views import APIView
+# from rest_framework.permissions import IsAuthenticated
+# from rest_framework_api_key.permissions import HasAPIKey
 
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
+from .tasks import processBuildingData
 from .utils import update_address_abbreviations
 from .serializers import BuildingSerializer, CooperationHistorySerializer
 from .models import (
@@ -26,7 +31,6 @@ from .models import (
     CooperationHistory,
 )
 
-from .tasks import processBuildingDataBatch
 
 logger = logging.getLogger(__name__)
 
@@ -36,34 +40,8 @@ def index(request):
 
 
 def convertAndInsertBuildingData(request):
-    df = pd.read_csv("/app/buildings_info.csv", low_memory=True)
-    batch_size = 1000
-    total_rows = len(df)
-    # num_batches = (total_rows + batch_size - 1) // batch_size
-    num_batches = 100
-
-    tasks = []
-    for batch in range(num_batches):
-        start_index = batch * batch_size
-        end_index = min((batch + 1) * batch_size, total_rows)
-
-        rows = df.iloc[start_index:end_index].to_dict(orient="records")
-        process = processBuildingDataBatch.delay(rows, batch, num_batches)
-        logger.info(
-            f"Processing batch {batch+1} of {num_batches} with {len(rows)} rows"
-        )
-
-        tasks.append(
-            {
-                # "task_id": process.id,
-                "batch": batch + 1,
-                "start_index": start_index,
-                "end_index": end_index,
-                "process_id": process.id,
-            }
-        )
-
-    return JsonResponse({"tasks": tasks})
+    processBuildingData.delay()
+    return HttpResponse("Processing building data in batches")
 
 
 def updateAddressAbbreviations(request):
