@@ -7,22 +7,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @shared_task(name="processBuildingData")
 def processBuildingData():
-        df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
-        batch_size = 1000
-        total_rows = len(df)
-        # num_batches = (total_rows + batch_size - 1) // batch_size
-        num_batches = 100
+    df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
+    batch_size = 1000
+    total_rows = len(df)
+    # num_batches = (total_rows + batch_size - 1) // batch_size
+    num_batches = 100
 
-        for batch in range(num_batches):
-            start_index = batch * batch_size
-            end_index = min((batch + 1) * batch_size, total_rows)
+    for batch in range(num_batches):
+        start_index = batch * batch_size
+        end_index = min((batch + 1) * batch_size, total_rows)
 
-            rows = df.iloc[start_index:end_index].to_dict(orient="records")
-            process = processBuildingDataBatch.delay(rows, batch, num_batches)
-            
-        return "Processing building data in batches"
+        rows = df.iloc[start_index:end_index].to_dict(orient="records")
+        process = processBuildingDataBatch.delay(rows, batch, num_batches)
+
+    return "Processing building data in batches"
+
 
 @shared_task(name="processBuildingDataBatch")
 def processBuildingDataBatch(rows, batch, num_batches):
@@ -69,24 +71,39 @@ def processBuildingDataBatch(rows, batch, num_batches):
             building_serializer = BuildingSerializer(data=building_data)
             cooperation_serializer = CooperationSerializer(data=cooperation_data)
 
-            if building_serializer.is_valid():
+            if not building_serializer.is_valid():
+                logger.error(
+                    f"Building data validation failed for row {row}: {building_serializer.errors}"
+                )
+            else:
                 building = building_serializer.save()
                 building_batch_data.append(building)
 
-            if cooperation_serializer.is_valid():
+            if not cooperation_serializer.is_valid():
+                logger.error(
+                    f"Cooperation data validation failed for row {row}: {cooperation_serializer.errors}"
+                )
+            else:
                 cooperation_batch_data.append(cooperation_serializer.validated_data)
 
         except Exception:
-            continue
+            logger.error(f"Error processing row {row}")
 
-    with transaction.atomic():
-        buildings = Building.objects.bulk_create(
-            building_batch_data, ignore_conflicts=True
+    try:
+        with transaction.atomic():
+            # Process building and cooperation data here
+            buildings = Building.objects.bulk_create(
+                building_batch_data, ignore_conflicts=True
+            )
+            cooperations = [
+                Cooperation(building=building, **data)
+                for building, data in zip(buildings, cooperation_batch_data)
+            ]
+            Cooperation.objects.bulk_create(cooperations)
+            logger.info(
+                f"Transaction successful for batch {batch + 1} of {num_batches}"
+            )
+    except Exception as e:
+        logger.error(
+            f"Transaction failed for batch {batch + 1} of {num_batches}: {str(e)}"
         )
-        cooperations = [
-            Cooperation(building=building, **data)
-            for building, data in zip(buildings, cooperation_batch_data)
-        ]
-        Cooperation.objects.bulk_create(cooperations)
-
-    logger.info(f"Batch {batch + 1} of {num_batches} completed.")
