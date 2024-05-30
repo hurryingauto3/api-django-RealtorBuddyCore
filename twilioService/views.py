@@ -7,12 +7,13 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from twilio.twiml.messaging_response import MessagingResponse
+from APIRealtorBuddyCore.config import STRIPE_PAYMENT_LINK
+from stripeService.models import Customer, Subscription
+
 from .models import TextMessage
 from .utils import getTextMessageBuildingSearchResponse, sendTextMessage
 from .llm_utils import displaySearchResultsToCustomer
-from twilio.twiml.messaging_response import MessagingResponse, Message
-
-from stripeService.models import Customer, Subscription
 
 logger = logging.getLogger(__name__)
 
@@ -97,13 +98,13 @@ def textMessageReceived(request):
             ):
                 date = stripe_subscription.canceled_at.strftime("%Y-%m-%d")
                 response.message(
-                    f"Your subscription will end on {date}. To avoid interruption, please renew at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+                    f"Your subscription will end on {date}. To avoid interruption, please renew at: {STRIPE_PAYMENT_LINK}."
                 )
 
         # Handle expired subscriptions
         elif datetime.datetime.now() > stripe_subscription.current_period_end:
             response.message(
-                "Your subscription has expired. To continue using our services, please renew at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+                f"Your subscription has expired. To continue using our services, please renew at: {STRIPE_PAYMENT_LINK}."
             )
 
         return HttpResponse(str(response), content_type="application/xml")
@@ -126,11 +127,11 @@ def textMessageReceived(request):
             response.message(response_text)
             if previous_texts > 2:
                 response.message(
-                    "Hello! To continue enjoying our services uninterrupted, please subscribe at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+                    f"Hello! To continue enjoying our services uninterrupted, please subscribe at: {STRIPE_PAYMENT_LINK}."
                 )
         else:
             response.message(
-                "Please subscribe to continue receiving our services at: buy.stripe.com/test_3cs9Cb4miaASfok7ss."
+                f"Please subscribe to continue receiving our services at: {STRIPE_PAYMENT_LINK}."
             )
 
     return HttpResponse(str(response), content_type="application/xml")
