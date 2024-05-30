@@ -194,7 +194,7 @@ def get_cooperation_message(
             if not cooperation_percentage
             else update_message
         )
-        return f"Hey, the {building_name} {cooperation_text}. It's located at {address}, and our last update for this is {last_update}.{update_message} Feel free to ask us anything else!"
+        return f"Hey, {building_name} {cooperation_text}. It's located at {address}, and our last update for this is {last_update}.{update_message} Feel free to ask us anything else!"
     else:
         return f"Hey, this building does not cooperate with locators at the moment. We checked this last at {last_update}.{update_message} Do you have other buildings you'd like us to check?"
 
@@ -211,7 +211,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
         last_update = format_date(building_data["updated_at"])
 
         cooperation_info = (
-            building_data.get("cooperation")[0]
+            building_data.get("cooperation")
             if building_data.get("cooperation", None)
             else {}
         )
