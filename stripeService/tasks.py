@@ -4,6 +4,7 @@ import datetime
 from django.utils import timezone
 from decimal import Decimal
 
+from twilioService.utils import sendTextMessage
 from .models import Customer, PaymentIntent, Subscription, Invoice
 from decimal import Decimal
 from celery import shared_task
@@ -127,6 +128,27 @@ def handleInvoiceEvent(event):
         },
     )
 
+    if invoice_data["status"] == "paid":
+        # Send a text message to the customer
+        sendTextMessage(
+            to_number=invoice.customer.phone,
+            body=f"Your payment of {invoice.amount_due} {invoice.currency.upper()} has been received. Thank you for subscribing Realtor Buddy.",
+        )
+        
+    if invoice_data["status"] == "open":
+        # Send a text message to the customer
+        sendTextMessage(
+            to_number=invoice.customer.phone,
+            body=f"Your payment of {invoice.amount_due} {invoice.currency.upper()} is due. Please pay at your earliest convenience to avoid service interruption.",
+        )
+    
+    if invoice_data["status"] == "past_due":
+        # Send a text message to the customer
+        sendTextMessage(
+            to_number=invoice.customer.phone,
+            body=f"Your payment of {invoice.amount_due} {invoice.currency.upper()} is past due. Please pay immediately to avoid service interruption.",
+        )
+        
 
 @shared_task(name="handleSubscriptionEvent")
 def handleSubscriptionEvent(event):
