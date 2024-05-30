@@ -7,8 +7,18 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from django.shortcuts import render
+from django_twilio.decorators import twilio_view
+
+from twilio.jwt.client import ClientCapabilityToken
 from twilio.twiml.messaging_response import MessagingResponse
-from APIRealtorBuddyCore.config import STRIPE_PAYMENT_LINK
+from twilio.twiml.voice_response import VoiceResponse
+
+from APIRealtorBuddyCore.config import (
+    STRIPE_PAYMENT_LINK,
+    TWILIO_ACCOUNT_SID_,
+    TWILIO_AUTH_TOKEN_,
+)
 from stripeService.models import Customer, Subscription
 
 from .models import TextMessage
@@ -137,7 +147,37 @@ def textMessageReceived(request):
     return HttpResponse(str(response), content_type="application/xml")
 
 
-# # Not for production use
+def dialerPage(request):
+    return render(request, "dialer.html")
+
+def generateToken(request):
+    account_sid = TWILIO_ACCOUNT_SID_
+    auth_token = TWILIO_AUTH_TOKEN_
+    application_sid = "your_twiml_app_sid"  # Create this in your Twilio console
+
+    token = ClientCapabilityToken(account_sid, auth_token)
+    token.allow_client_outgoing(application_sid)
+    token = token.to_jwt().decode("utf-8")
+
+    return JsonResponse({"token": token})
+
+
+@twilio_view
+def makeCall(request):
+    response = VoiceResponse()
+    to_number = request.POST.get("to")
+    if not to_number:
+        response.say("Invalid phone number.")
+    else:
+        response.dial(to_number)
+    return response
+
+
+##########################3####
+### Not for production use ####
+###############################
+
+
 # @require_POST
 # @csrf_exempt
 # def whatsappMessageReceived(request):
@@ -185,36 +225,36 @@ def textMessageReceived(request):
 #         return HttpResponse(status=200)
 
 
-@csrf_exempt
-@require_POST
-def internalTextMessageReceived(request):
+# @csrf_exempt
+# @require_POST
+# def internalTextMessageReceived(request):
 
-    try:
-        data = json.loads(request.body)  # Parse the JSON data from the request body
-    except json.JSONDecodeError:
-        logger.error("Error decoding JSON")
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+#     try:
+#         data = json.loads(request.body)  # Parse the JSON data from the request body
+#     except json.JSONDecodeError:
+#         logger.error("Error decoding JSON")
+#         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    message_raw = data.get("Body", None)
-    # message_distilled = distillSearchItemFromQuery(message_raw)
-    message_distilled = None
-    start_time = time.time()
-    search_result = getTextMessageBuildingSearchResponse(
-        message_distilled if message_distilled else message_raw
-    )
-    search_time = round(time.time() - start_time, 2)
+#     message_raw = data.get("Body", None)
+#     # message_distilled = distillSearchItemFromQuery(message_raw)
+#     message_distilled = None
+#     start_time = time.time()
+#     search_result = getTextMessageBuildingSearchResponse(
+#         message_distilled if message_distilled else message_raw
+#     )
+#     search_time = round(time.time() - start_time, 2)
 
-    start_time = time.time()
-    output = displaySearchResultsToCustomer(message_raw, search_result)
-    ai_present_time = round(time.time() - start_time, 2)
+#     start_time = time.time()
+#     output = displaySearchResultsToCustomer(message_raw, search_result)
+#     ai_present_time = round(time.time() - start_time, 2)
 
-    return JsonResponse(
-        {
-            "message_raw": message_raw,
-            "message_distilled": message_distilled,
-            "search_result": search_result,
-            "output": output,
-            "search_time": search_time,
-            "ai_present_time": ai_present_time,
-        }
-    )
+#     return JsonResponse(
+#         {
+#             "message_raw": message_raw,
+#             "message_distilled": message_distilled,
+#             "search_result": search_result,
+#             "output": output,
+#             "search_time": search_time,
+#             "ai_present_time": ai_present_time,
+#         }
+#     )

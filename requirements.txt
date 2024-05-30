@@ -37,7 +37,9 @@ django-celery-beat==2.5.0
 django-cors-headers==4.3.1
 django-debug-toolbar==4.3.0
 django-livereload-server==0.5.1
+django-phonenumber-field==7.3.0
 django-timezone-field==6.1.0
+django-twilio==0.14.3.3
 djangorestframework==3.14.0
 djangorestframework-api-key==3.0.0
 fastapi==0.110.1
@@ -103,6 +105,7 @@ orjson==3.9.15
 overrides==7.7.0
 packaging==23.2
 pandas==2.2.1
+phonenumbers==8.13.37
 posthog==3.5.0
 prompt-toolkit==3.0.43
 protobuf==4.25.3

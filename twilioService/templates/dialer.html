@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Call from Browser</title>
+    <script src="https://media.twiliocdn.com/sdk/js/client/v1.10/twilio.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/generateToken/')
+                .then(response => response.json())
+                .then(data => Twilio.Device.setup(data.token));
+
+            document.getElementById('callForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var number = document.getElementById('toNumber').value;
+                Twilio.Device.connect({number: number});
+            });
+        });
+    </script>
+</head>
+<body>
+    <form id="callForm">
+        <input type="text" id="toNumber" placeholder="Enter number to call">
+        <button type="submit">Call</button>
+    </form>
+</body>
+</html>

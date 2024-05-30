@@ -5,7 +5,6 @@ from APIRealtorBuddyCore.config import (
     TWILIO_ACCOUNT_SID_,
     TWILIO_AUTH_TOKEN_,
     TWILIO_NUMBER_,
-    SLACK_BA_TOKEN,
 )
 from twilio.rest import Client
 
