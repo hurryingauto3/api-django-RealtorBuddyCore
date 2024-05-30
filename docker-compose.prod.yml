@@ -5,7 +5,6 @@ services:
     container_name: redis_realtorbuddycore
     image: redis:latest
     restart: always
-
   api-realtorbuddycore:
     container_name: api-realtorbuddycore
     build:
@@ -15,14 +14,12 @@ services:
       sh -c "python manage.py makemigrations &&
             python manage.py migrate &&
             python manage.py collectstatic --noinput &&
-            gunicorn APIRealtorBuddyCore.wsgi:application --workers 4 --bind 0.0.0.0:8000 --log-level debug --access-logfile -"
+            gunicorn APIRealtorBuddyCore.wsgi:application --workers 4 --bind 0.0.0.0:8000 --log-level info --access-logfile -"
             
     volumes:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      - DEBUG=0  # Ensure debug is turned off in production
     restart: always
     depends_on:
       - redis_realtorbuddycore
@@ -36,8 +33,6 @@ services:
     command: celery -A APIRealtorBuddyCore worker --loglevel=info  --concurrency=1
     volumes:
       - .:/app
-    environment:
-      - DEBUG=0
     restart: always
     depends_on:
       - api-realtorbuddycore
@@ -51,8 +46,6 @@ services:
     command: celery -A APIRealtorBuddyCore beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
-    environment:
-      - DEBUG=0
     restart: always
     depends_on:
       - api-realtorbuddycore
