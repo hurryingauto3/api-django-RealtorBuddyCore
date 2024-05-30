@@ -9,7 +9,7 @@ def validateBuildingDataFromSlack(
 ):
 
     building_url = (
-        f"https://be42-39-51-66-137.ngrok-free.app/buildings/api/{building_id}"
+        f"https://api.realtor-buddy.com/buildings/building/{building_id}"
     )
     url = "https://slack.com/api/chat.postMessage"
     payload = {
