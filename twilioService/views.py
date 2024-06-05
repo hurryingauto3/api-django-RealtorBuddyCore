@@ -5,19 +5,26 @@ import datetime
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from django.shortcuts import render
 from django_twilio.decorators import twilio_view
 
 from twilio.jwt.client import ClientCapabilityToken
+from twilio.jwt.access_token import AccessToken
+from twilio.jwt.access_token.grants import VoiceGrant
+from twilio.twiml.voice_response import VoiceResponse, Dial
+
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.twiml.voice_response import VoiceResponse
 
 from APIRealtorBuddyCore.config import (
     STRIPE_PAYMENT_LINK,
+    TWILIO_NUMBER_,
     TWILIO_ACCOUNT_SID_,
-    TWILIO_AUTH_TOKEN_,
+    TWILIO_API_KEY,
+    TWILIO_API_KEY_SID,
+    TWILIO_APP_SID,
 )
 from stripeService.models import Customer, Subscription
 
@@ -147,29 +154,38 @@ def textMessageReceived(request):
     return HttpResponse(str(response), content_type="application/xml")
 
 
+@require_GET
 def dialerPage(request):
     return render(request, "dialer.html")
 
+
+@require_GET
 def generateToken(request):
-    account_sid = TWILIO_ACCOUNT_SID_
-    auth_token = TWILIO_AUTH_TOKEN_
-    application_sid = "your_twiml_app_sid"  # Create this in your Twilio console
-
-    token = ClientCapabilityToken(account_sid, auth_token)
-    token.allow_client_outgoing(application_sid)
-    token = token.to_jwt().decode("utf-8")
-
+    access_token = AccessToken(
+        TWILIO_ACCOUNT_SID_, TWILIO_API_KEY, TWILIO_API_KEY_SID, identity=TWILIO_NUMBER_
+    )
+    voice_grant = VoiceGrant(
+        outgoing_application_sid=TWILIO_APP_SID,
+        incoming_allow=True,
+    )
+    access_token.add_grant(voice_grant)
+    token = access_token.to_jwt()
     return JsonResponse({"token": token})
 
 
 @twilio_view
 def makeCall(request):
+    
+    to_number = request.POST.get("number")
     response = VoiceResponse()
-    to_number = request.POST.get("to")
-    if not to_number:
+    dial = Dial(callerId=TWILIO_NUMBER_)
+    if not to_number or not to_number.isdigit() or len(to_number) < 10:
         response.say("Invalid phone number.")
-    else:
-        response.dial(to_number)
+    
+    if 'To' in request.POST and request.POST['To']:
+        print('outbound call')
+        dial.number(request.form['To'])
+        return str(response.append(dial))
     return response
 
 

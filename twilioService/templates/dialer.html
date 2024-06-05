@@ -1,26 +1,139 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
     <title>Call from Browser</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
+        }
+
+        .dialer {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .digit,
+        .call {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        .call {
+            width: 100%;
+        }
+
+        #toNumber {
+            width: calc(100% - 20px);
+            /* Full width minus padding */
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+    </style>
     <script src="https://media.twiliocdn.com/sdk/js/client/v1.10/twilio.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            fetch('/generateToken/')
-                .then(response => response.json())
-                .then(data => Twilio.Device.setup(data.token));
+            const callButton = document.getElementById('callButton');
+            const inputField = document.getElementById('toNumber');
+            callButton.disabled = true;  // Disable call button initially
 
-            document.getElementById('callForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-                var number = document.getElementById('toNumber').value;
-                Twilio.Device.connect({number: number});
+            // Fetch token and setup Twilio Device
+            fetch('generateToken/')
+                .then(response => response.json())
+                .then(data => {
+                    Twilio.Device.setup(data.token);
+                    callButton.disabled = false;  // Enable call button after setup
+                })
+                .catch(error => {
+                    console.error('Error setting up Twilio Device:', error);
+                    alert("Failed to setup Twilio Device. Please refresh the page and try again.");
+                });
+
+            document.querySelectorAll('.digit').forEach(button => {
+                button.addEventListener('click', function () {
+                    if (inputField) {
+                        inputField.value += this.textContent;
+                    }
+                });
+            });
+
+            inputField.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' || e.key === 'Delete' || e.key.match(/^[0-9*#]$/)) {
+                    return; // Allow these keys to function normally
+                } else {
+                    e.preventDefault(); // Prevent other keys
+                }
+            });
+
+            callButton.addEventListener('click', function () {
+                if (callButton.disabled) {
+                    // Prevent calls if setup is not done
+                    alert("Please wait for the setup to complete before making a call.");
+                    return;
+                }
+
+                let number = inputField.value;
+                if (!number) {
+                    alert("Please enter a number to call.");
+                    return;
+                }
+
+                if (Twilio.Device) {
+                    Twilio.Device.connect({ number: number });
+                } else {
+                    alert("Twilio Device is not ready. Please wait.");
+                }
             });
         });
     </script>
+
 </head>
+
 <body>
-    <form id="callForm">
-        <input type="text" id="toNumber" placeholder="Enter number to call">
-        <button type="submit">Call</button>
-    </form>
+    <div class="dialer">
+        <form id="callForm">
+            <input type="text" id="toNumber" placeholder="Enter number to call">
+            <div class="keypad">
+                <button class="digit">1</button>
+                <button class="digit">2</button>
+                <button class="digit">3</button>
+                <button class="digit">4</button>
+                <button class="digit">5</button>
+                <button class="digit">6</button>
+                <button class="digit">7</button>
+                <button class="digit">8</button>
+                <button class="digit">9</button>
+                <button class="digit">*</button>
+                <button class="digit">0</button>
+                <button class="digit">#</button>
+            </div>
+            <button type="submit" class="call" id="callButton">Call</button>
+        </form>
+    </div>
 </body>
+
 </html>
