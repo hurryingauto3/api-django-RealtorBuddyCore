@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def sendTextMessage(to_number, body):
-    
+
     try:
         client = Client(TWILIO_ACCOUNT_SID_, TWILIO_AUTH_TOKEN_)
         message = client.messages.create(
@@ -23,7 +23,7 @@ def sendTextMessage(to_number, body):
         )
 
         return message
-    
+
     except Exception as e:
         logger.error(f"Error sending message: {e}")
         return None
@@ -35,24 +35,13 @@ def fetchAndStoreMessage(message_sid, textmessage):
         client = Client(TWILIO_ACCOUNT_SID_, TWILIO_AUTH_TOKEN_)
         message = client.messages(message_sid).fetch()
 
-        textmessage.to_country = message.to_country
-        textmessage.to_state = message.to_state
-        textmessage.sms_message_sid = message.sid
-        textmessage.num_media = message.num_media
-        textmessage.to_city = message.to_city
-        textmessage.from_zip = message.from_zip
-        textmessage.sms_sid = message.sid
-        textmessage.from_state = message.from_state
-        textmessage.sms_status = message.status
-        textmessage.from_city = message.from_city
         textmessage.body = message.body
-        textmessage.from_country = message.from_country
-        textmessage.to_number = message.to
-        textmessage.to_zip = message.to_zip
         textmessage.num_segments = message.num_segments
-        textmessage.message_sid = message.sid
-        textmessage.account_sid = message.account_sid
         textmessage.from_number = message.from_
+        textmessage.to_number = message.to
+        textmessage.account_sid = message.account_sid
+        textmessage.num_media = message.num_media
+        textmessage.status = message.status
         textmessage.api_version = message.api_version
 
         textmessage.save()
