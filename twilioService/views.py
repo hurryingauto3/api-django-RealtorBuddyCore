@@ -12,7 +12,11 @@ from APIRealtorBuddyCore.config import STRIPE_PAYMENT_LINK
 from stripeService.models import Customer, Subscription
 
 from .models import TextMessage
-from .utils import getTextMessageBuildingSearchResponse, sendTextMessage
+from .utils import (
+    getTextMessageBuildingSearchResponse,
+    sendTextMessage,
+    fetchAndStoreMessage,
+)
 from .llm_utils import displaySearchResultsToCustomer
 
 logger = logging.getLogger(__name__)
@@ -55,9 +59,12 @@ def textMessageReceived(request):
             "api_version": data.get("ApiVersion", ""),
         },
     )
-    if textmessage.sms_status != "received":
-        return HttpResponse(status=200)
     
+    if textmessage.sms_status != "received":
+        # Get the message information via API
+        fetchAndStoreMessage(textmessage.sms_message_sid, textmessage)
+        return HttpResponse(status=200)
+
     if not created:
         return HttpResponse(status=200)
 
