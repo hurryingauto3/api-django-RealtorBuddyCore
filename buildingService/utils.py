@@ -3,6 +3,32 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from io import StringIO
 
+import boto3
+import pandas as pd
+from botocore.exceptions import NoCredentialsError
+from APIRealtorBuddyCore.config import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+
+def get_latest_file_from_s3(bucket):
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+    try:
+        response = s3_client.list_objects_v2(Bucket=bucket)
+        files = response.get('Contents', [])
+        if not files:
+            return None
+        latest_file = max(files, key=lambda x: x['LastModified'])
+        return latest_file['Key']
+    except NoCredentialsError:
+        print("Credentials not available")
+        return None
+
+def download_file_from_s3(bucket, key, download_path):
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+    try:
+        s3_client.download_file(bucket, key, download_path)
+        return True
+    except Exception as e:
+        print(f"Error downloading the file: {e}")
+        return False
 
 def update_address_abbreviations():
     url = "https://pe.usps.com/text/pub28/28apc_002.htm"

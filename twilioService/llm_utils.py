@@ -227,13 +227,13 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             )
             needs_update = True
 
-        elif not cooperation:
+        elif not cooperation and (cooperation_percentage or cooeperation_fixed):
             validateBuildingDataFromSlack(
                 building_id, building_name, user_query, from_number
             )
             needs_update = True
 
-        elif not cooperation_percentage and cooeperation_fixed:
+        elif cooperation and not (cooperation_percentage and cooeperation_fixed):
             validateBuildingDataFromSlack(
                 building_id, building_name, user_query, from_number
             )

@@ -1,4 +1,5 @@
 from .serializers import BuildingSerializer, CooperationSerializer
+from .utils import get_latest_file_from_s3, download_file_from_s3
 from .models import Building, Cooperation
 from django.db import transaction
 import pandas as pd
@@ -10,21 +11,30 @@ logger = logging.getLogger(__name__)
 
 @shared_task(name="processBuildingData")
 def processBuildingData():
-    df = pd.read_csv("/app/buildings_info.csv", low_memory=False)
+    bucket = "buildingdumps"
+    latest_file_key = get_latest_file_from_s3(bucket)
+    if latest_file_key is None:
+        return "No files found in the bucket."
+
+    local_file_path = "/app/latest_buildings_info.csv"
+    download_successful = download_file_from_s3(
+        bucket, latest_file_key, local_file_path
+    )
+    if not download_successful:
+        return "Failed to download the latest file."
+
+    df = pd.read_csv(local_file_path, low_memory=False)
     batch_size = 1000
     total_rows = len(df)
-    # num_batches = (total_rows + batch_size - 1) // batch_size
     num_batches = 100
 
     for batch in range(num_batches):
         start_index = batch * batch_size
         end_index = min((batch + 1) * batch_size, total_rows)
-
         rows = df.iloc[start_index:end_index].to_dict(orient="records")
-        process = processBuildingDataBatch.delay(rows, batch, num_batches)
+        processBuildingDataBatch.delay(rows, batch, num_batches)
 
     return "Processing building data in batches"
-
 
 @shared_task(name="processBuildingDataBatch")
 def processBuildingDataBatch(rows, batch, num_batches):

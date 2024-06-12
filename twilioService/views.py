@@ -57,10 +57,9 @@ def textMessageReceived(request):
     )
     if textmessage.sms_status != "received":
         return HttpResponse(status=200)
-
-    response = MessagingResponse(
-        action="https://2e0a-39-51-66-137.ngrok-free.app/internalTextMessageReceived/"
-    )
+    
+    if not created:
+        return HttpResponse(status=200)
 
     try:
         stripe_customer = Customer.objects.get(phone=textmessage.from_number)
