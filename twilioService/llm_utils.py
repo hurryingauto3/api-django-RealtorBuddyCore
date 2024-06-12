@@ -276,7 +276,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             building_name=building_name,
             cooperation=cooperation,
             address=address,
-            last_update=last_update,
+            last_update=format_date(last_update),
             needs_update=needs_update,
             cooperation_percentage=cooperation_percentage,
             cooperation_fixed=cooperation_fixed,
