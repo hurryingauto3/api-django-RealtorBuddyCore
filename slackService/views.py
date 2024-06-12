@@ -32,11 +32,10 @@ def handleActionBuildingAssistant(request):
         building_url = (
             f"https://api.realtor-buddy.com/buildings/building/{building_id}"
         )
-        # # Get updated building information
-        # body = getUpdatedBuildingInformation(building_id)
-        # # Send a text message with the building information updated
-        # sendTextMessage(from_number, body)
-
+        # Get updated building information
+        body = getUpdatedBuildingInformation(building_id)
+        # Send a text message with the building information updated
+        sendTextMessage(from_number, body)
         # Send the updated information back to Slack using the response_url
         slack_response = {
             "text": f"Updated information for <{building_url}|building> sent to {from_number} by <@{user_id}>",
