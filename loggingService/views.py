@@ -30,14 +30,14 @@ def receiveCloudFlareLogs(request):
         )
         log_entry.save()
 
-        # Extract location info
-        city = cf.get("city", "Unknown city")
-        region = cf.get("region", "Unknown region")
-        country = cf.get("country", "Unknown country")
-        # Format the Slack message
-        slack_message = f"{method}; {url}; {city}, {region}, {country}"
-        # Send the log to the Slack channel
-        sendHTTPLogToSlackChannel(slack_message)
+        # # Extract location info
+        # city = cf.get("city", "Unknown city")
+        # region = cf.get("region", "Unknown region")
+        # country = cf.get("country", "Unknown country")
+        # # Format the Slack message
+        # slack_message = f"{method}; {url}; {city}, {region}, {country}"
+        # # Send the log to the Slack channel
+        # sendHTTPLogToSlackChannel(slack_message)
 
         return JsonResponse({"status": "Update sent successfully"}, status=200)
     except json.JSONDecodeError:
