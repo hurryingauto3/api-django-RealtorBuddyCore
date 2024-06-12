@@ -209,9 +209,9 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
 
         building_name = building_data.get("name")
         address = building_data.get("address")
-        created = format_date(building_data["created_at"])
+        created = building_data["created_at"]
         created_dt = datetime.datetime.strptime(created, "%Y-%m-%dT%H:%M:%S.%f")
-        last_update = format_date(building_data["updated_at"])
+        last_update = building_data["updated_at"]
         last_update_dt = datetime.datetime.strptime(last_update, "%Y-%m-%dT%H:%M:%S.%f")
 
         cooperation_info = (
