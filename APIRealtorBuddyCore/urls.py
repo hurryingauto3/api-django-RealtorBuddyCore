@@ -24,5 +24,6 @@ urlpatterns = [
     path("twilio/", include("twilioService.urls")),
     path("slack/", include("slackService.urls")),
     path("stripe/", include("stripeService.urls")),
+    path("logging/", include("loggingService.urls")),
     # path('accounts/', include('allauth.urls')),
 ]
