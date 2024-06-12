@@ -32,9 +32,6 @@ def receiveCloudFlareLogs(request):
         )
         log_entry.save()
 
-        # Log the JSON data (optional)
-        logger.info(json.dumps(data, indent=2))
-
         return JsonResponse({"status": "Update sent successfully"}, status=200)
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON")
