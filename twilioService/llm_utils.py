@@ -202,6 +202,7 @@ def get_cooperation_message(
 def displaySearchResultsToCustomer(user_query, search_results, from_number):
     try:
         building_id = generateRelevantBuildingData(user_query, search_results)
+
         building_data = get_building_data(building_id)
         if not building_data:
             return "We currently do not have information on this building. We'll get back to you with the details soon."
@@ -217,13 +218,13 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
         )
         cooperation = cooperation_info.get("cooperate", None)
         cooperation_percentage = cooperation_info.get("cooperation_percentage", None)
-        cooeperation_fixed = cooperation_info.get("cooperation_fixed", None)
+        cooperation_fixed = cooperation_info.get("cooperation_fixed", None)
 
         cooperation_percentage_present = (
             True if cooperation_percentage and cooperation_percentage != 0 else False
         )
-        cooeperation_fixed_present = (
-            True if cooeperation_fixed and cooeperation_fixed != 0 else False
+        cooperation_fixed_present = (
+            True if cooperation_fixed and cooperation_fixed != 0 else False
         )
 
         needs_update = False
@@ -244,7 +245,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             )
 
         elif not cooperation and (
-            cooperation_percentage_present or cooeperation_fixed_present
+            cooperation_percentage_present or cooperation_fixed_present
         ):
             needs_update = True
             reason = "Cooperation values found but no cooperation"
@@ -253,7 +254,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             )
 
         elif cooperation and not (
-            cooperation_percentage_present or cooeperation_fixed_present
+            cooperation_percentage_present or cooperation_fixed_present
         ):
             reason = "Cooperation found but no cooperation values"
             needs_update = True
@@ -268,7 +269,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
             last_update=last_update,
             needs_update=needs_update,
             cooperation_percentage=cooperation_percentage,
-            cooperation_fixed=cooeperation_fixed,
+            cooperation_fixed=cooperation_fixed,
         )
 
     except Exception as e:
@@ -281,27 +282,32 @@ def getUpdatedBuildingInformation(building_id):
     building_data = get_building_data(building_id=building_id)
 
     if not building_data:
-        return "We're having trouble retrieving the building details right now. Please try again later."
+        return None
 
     building_name = building_data.get("name")
     address = building_data.get("address")
     last_update = format_date(building_data["updated_at"])
 
-    cooperation_info = building_data.get("cooperation", [{}])[0]
-    cooperation = cooperation_info.get("cooperate")
-    cooperation_percentage = cooperation_info.get("cooperation_percentage")
+    cooperation_info = (
+        building_data.get("cooperation")
+        if building_data.get("cooperation", None)
+        else {}
+    )
+    cooperation = cooperation_info.get("cooperate", None)
+    cooperation_percentage = cooperation_info.get("cooperation_percentage", None)
+    cooperation_fixed = cooperation_info.get("cooperation_fixed", None)
 
     if cooperation:
         cooperation_text = (
             f"cooperates at {cooperation_percentage}%"
             if cooperation_percentage
-            else "cooperates"
+            else (
+                f"cooperates at a fixed rate of ${cooperation_fixed}"
+                if cooperation_fixed
+                else "cooperates but with no rate specified"
+            )
         )
-        update_message = (
-            " We'll get back to you with the cooperation percentage soon. "
-            if not cooperation_percentage
-            else update_message
-        )
+
         return f"Hey, you recently requested information on the {building_name}. Here's the updated information: It {cooperation_text}. It's located at {address}, and our last update for this is {last_update}. Feel free to ask us anything else!"
     else:
         return f"Hey, you recently requested information on the {building_name}. This building does not cooperate with locators at the moment. We checked this last at {last_update}. Do you have other buildings you'd like us to check?"

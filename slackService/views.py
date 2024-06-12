@@ -35,7 +35,8 @@ def handleActionBuildingAssistant(request):
         # Get updated building information
         body = getUpdatedBuildingInformation(building_id)
         # Send a text message with the building information updated
-        sendTextMessage(from_number, body)
+        if body:
+            sendTextMessage(from_number, body)
         # Send the updated information back to Slack using the response_url
         slack_response = {
             "text": f"Updated information for <{building_url}|building> sent to {from_number} by <@{user_id}>",
