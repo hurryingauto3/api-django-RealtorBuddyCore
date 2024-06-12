@@ -10,6 +10,7 @@ def sendHTTPLogToSlackChannel(
     payload = {
         "channel": "C077VLD98AG",
         "text": body,
+        "mrkdwn": "true",
     }
 
     headers = {
