@@ -62,6 +62,7 @@ def textMessageReceived(request):
         return HttpResponse(status=200)
 
     try:
+        response = MessagingResponse()
         stripe_customer = Customer.objects.get(phone=textmessage.from_number)
         stripe_subscription = (
             Subscription.objects.get(customer=stripe_customer)
