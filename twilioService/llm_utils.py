@@ -219,25 +219,47 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
         cooperation_percentage = cooperation_info.get("cooperation_percentage", None)
         cooeperation_fixed = cooperation_info.get("cooperation_fixed", None)
 
+        cooperation_percentage_present = (
+            True if cooperation_percentage and cooperation_percentage != 0 else False
+        )
+        cooeperation_fixed_present = (
+            True if cooeperation_fixed and cooeperation_fixed != 0 else False
+        )
+
         needs_update = False
+        reason = ""
         # Check if the data is older than 30 days to validate from slack
         if datetime.datetime.now().date() - last_update > datetime.timedelta(days=15):
-            validateBuildingDataFromSlack(
-                building_id, building_name, user_query, from_number
-            )
             needs_update = True
+            reason = "Data is older than 15 days"
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number, reason
+            )
 
-        elif not cooperation and (cooperation_percentage or cooeperation_fixed):
-            validateBuildingDataFromSlack(
-                building_id, building_name, user_query, from_number
-            )
+        elif cooperation_info == {}:
             needs_update = True
+            reason = "No cooperation data found"
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number, reason
+            )
 
-        elif cooperation and not (cooperation_percentage and cooeperation_fixed):
-            validateBuildingDataFromSlack(
-                building_id, building_name, user_query, from_number
-            )
+        elif not cooperation and (
+            cooperation_percentage_present or cooeperation_fixed_present
+        ):
             needs_update = True
+            reason = "Cooperation values found but no cooperation"
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number, reason
+            )
+
+        elif cooperation and not (
+            cooperation_percentage_present or cooeperation_fixed_present
+        ):
+            reason = "Cooperation found but no cooperation values"
+            needs_update = True
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number, reason
+            )
 
         return get_cooperation_message(
             building_name=building_name,

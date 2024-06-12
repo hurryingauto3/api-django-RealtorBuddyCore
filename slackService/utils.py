@@ -6,6 +6,7 @@ def validateBuildingDataFromSlack(
     building_name,
     user_query,
     from_number,
+    reason,
 ):
 
     building_url = (
@@ -24,7 +25,7 @@ def validateBuildingDataFromSlack(
             },
             {
                 "type": "section",
-                "fields": [{"type": "mrkdwn", "text": f'*Message:*\n"{user_query}"'}],
+                "fields": [{"type": "mrkdwn", "text": f'*Message:*\n"{user_query}"\n*From:*\n{from_number}\n*Reason:*\n{reason}'}],
             },
             {
                 "type": "actions",

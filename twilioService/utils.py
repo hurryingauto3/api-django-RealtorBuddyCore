@@ -17,6 +17,7 @@ def sendTextMessage(to_number, body):
 
     message = client.messages.create(
         from_=TWILIO_NUMBER_,
+        messaging_service_sid="MG764153f5997679716afa983293b0a273",
         to=to_number,
         body=body,
     )
