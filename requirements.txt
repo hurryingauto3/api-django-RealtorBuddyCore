@@ -33,7 +33,7 @@ cryptography==42.0.7
 dataclasses-json==0.6.4
 deprecated==1.2.14
 distro==1.9.0
-django==5.0.6
+django
 django-allauth==0.63.1
 django-celery-beat==2.5.0
 django-cors-headers==4.3.1
