@@ -209,7 +209,10 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
 
         building_name = building_data.get("name")
         address = building_data.get("address")
+        created = format_date(building_data["created_at"])
+        created_dt = datetime.datetime.strptime(created, "%Y-%m-%dT%H:%M:%S.%f")
         last_update = format_date(building_data["updated_at"])
+        last_update_dt = datetime.datetime.strptime(last_update, "%Y-%m-%dT%H:%M:%S.%f")
 
         cooperation_info = (
             building_data.get("cooperation")
@@ -229,8 +232,15 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
 
         needs_update = False
         reason = ""
-        # Check if the data is older than 30 days to validate from slack
-        if datetime.datetime.now().date() - last_update > datetime.timedelta(days=15):
+
+        if created_dt - last_update_dt < datetime.timedelta(minutes=3):
+            needs_update = True
+            reason = "Last update is 12-06-2024"
+            validateBuildingDataFromSlack(
+                building_id, building_name, user_query, from_number, reason
+            )
+
+        elif datetime.datetime.now() - last_update_dt > datetime.timedelta(days=15):
             needs_update = True
             reason = "Data is older than 15 days"
             validateBuildingDataFromSlack(
