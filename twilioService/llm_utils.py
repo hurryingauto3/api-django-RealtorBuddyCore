@@ -233,7 +233,7 @@ def displaySearchResultsToCustomer(user_query, search_results, from_number):
         needs_update = False
         reason = ""
 
-        if created_dt - last_update_dt < datetime.timedelta(minutes=3):
+        if last_update_dt - created_dt < datetime.timedelta(minutes=3):
             needs_update = True
             reason = "Last update is 12-06-2024"
             validateBuildingDataFromSlack(
