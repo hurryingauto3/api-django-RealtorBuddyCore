@@ -53,6 +53,7 @@ def textMessageReceived(request):
             message = fetchTextMessage(data.get("MessageSid", ""))
 
             if message:
+                textmessage.sms_status = data.get("SmsStatus", "")
                 textmessage.body = message.body
                 textmessage.save()
 
