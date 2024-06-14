@@ -15,7 +15,7 @@ from .models import TextMessage
 from .utils import (
     getTextMessageBuildingSearchResponse,
     sendTextMessage,
-    fetchAndStoreMessage,
+    fetchTextMessage,
 )
 from .llm_utils import displaySearchResultsToCustomer
 
@@ -35,35 +35,52 @@ def sendTextMessageEP(request):
 @csrf_exempt
 def textMessageReceived(request):
     data = request.POST
+
+    if data.get("MessageStatus") != "received":
+        textmessage, created = TextMessage.objects.update_or_create(
+            message_sid=data.get("MessageSid", ""),
+            defaults={
+                "sms_status": data.get("SmsStatus", ""),
+                "to_number": data.get("To", ""),
+                "message_service_sid": data.get("MessageServiceSid", ""),
+                "to_zip": data.get("ToZip", ""),
+                "account_sid": data.get("AccountSid", ""),
+                "from_number": data.get("From", ""),
+                "api_version": data.get("ApiVersion", ""),
+            },
+        )
+
+        if data.get("SmsStatus", "") in ["delivered", "undelivered"]:
+            message = fetchTextMessage(data.get("MessageSid", ""))
+
+            if message:
+                textmessage.body = message.body
+                textmessage.save()
+
+        return HttpResponse(status=200)
+
     textmessage, created = TextMessage.objects.update_or_create(
-        sms_message_sid=data.get("SmsMessageSid", ""),
+        message_sid=data.get("MessageSid", ""),
         defaults={
             "to_country": data.get("ToCountry", ""),
             "to_state": data.get("ToState", ""),
-            "sms_message_sid": data.get("SmsMessageSid", ""),
             "num_media": data.get("NumMedia", ""),
             "to_city": data.get("ToCity", ""),
             "from_zip": data.get("FromZip", ""),
-            "sms_sid": data.get("SmsSid", ""),
             "from_state": data.get("FromState", ""),
             "sms_status": data.get("SmsStatus", ""),
             "from_city": data.get("FromCity", ""),
             "body": data.get("Body", ""),
             "from_country": data.get("FromCountry", ""),
             "to_number": data.get("To", ""),
+            "message_service_sid": data.get("MessageServiceSid", ""),
             "to_zip": data.get("ToZip", ""),
             "num_segments": data.get("NumSegments", ""),
-            "message_sid": data.get("MessageSid", ""),
             "account_sid": data.get("AccountSid", ""),
             "from_number": data.get("From", ""),
             "api_version": data.get("ApiVersion", ""),
         },
     )
-    
-    if textmessage.sms_status != "received":
-        # Get the message information via API
-        fetchAndStoreMessage(textmessage.sms_message_sid, textmessage)
-        return HttpResponse(status=200)
 
     if not created:
         return HttpResponse(status=200)

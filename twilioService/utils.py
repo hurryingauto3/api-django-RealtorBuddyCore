@@ -29,23 +29,12 @@ def sendTextMessage(to_number, body):
         return None
 
 
-def fetchAndStoreMessage(message_sid, textmessage):
+def fetchTextMessage(message_sid):
 
     try:
         client = Client(TWILIO_ACCOUNT_SID_, TWILIO_AUTH_TOKEN_)
         message = client.messages(message_sid).fetch()
-
-        textmessage.body = message.body
-        textmessage.num_segments = message.num_segments
-        textmessage.from_number = message.from_
-        textmessage.to_number = message.to
-        textmessage.account_sid = message.account_sid
-        textmessage.num_media = message.num_media
-        textmessage.status = message.status
-        textmessage.api_version = message.api_version
-
-        textmessage.save()
-        return textmessage
+        return message
 
     except Exception as e:
         logger.error(f"Error fetching message: {e}")
