@@ -36,7 +36,7 @@ def sendTextMessageEP(request):
 def textMessageReceived(request):
     data = request.POST
 
-    if data.get("MessageStatus") != "received":
+    if data.get("SmsStatus") != "received":
         textmessage, created = TextMessage.objects.update_or_create(
             message_sid=data.get("MessageSid", ""),
             defaults={
@@ -49,7 +49,6 @@ def textMessageReceived(request):
                 "api_version": data.get("ApiVersion", ""),
             },
         )
-
         if data.get("SmsStatus", "") in ["delivered", "undelivered"]:
             message = fetchTextMessage(data.get("MessageSid", ""))
 
@@ -58,7 +57,7 @@ def textMessageReceived(request):
                 textmessage.save()
 
         return HttpResponse(status=200)
-
+    
     textmessage, created = TextMessage.objects.update_or_create(
         message_sid=data.get("MessageSid", ""),
         defaults={
