@@ -2,6 +2,10 @@ import datetime
 from django.db import transaction
 from celery import shared_task
 from .models import client, clientEmailDefinition, clientEmailOutReachRuleset
+from .utils import GmailServiceAccountAPI, construct_email
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(name="clientEmailOutreachDriver")
@@ -59,25 +63,26 @@ def clientEmailOutreach(client_id, email_type_id):
         with transaction.atomic():
             # Fetch the client and email type from the database correctly using `get()` instead of `filter()`
             client_ = client.objects.get(id=client_id)
-            email_type = clientEmailDefinition.objects.get(id=email_type_id)
 
             # Send the email (placeholder for email sending logic)
-            send_email_to_client(
-                client.name,
-                client_.email,
-                email_type.email_subject,
-                email_type.email_body,
+            sent = send_email_to_client(
+                client_.name, client_.email, email_type_id, user="ashir"
             )
 
-            # Update client details
-            client_.contacted_times += 1
-            client_.last_contacted = datetime.datetime.now()
-            client_.save()
+            if sent:
+                # Update client details
+                client_.contacted_times += 1
+                client_.last_contacted = datetime.datetime.now()
+                client_.save()
 
-            # Logging the action
-            print(
-                f"Email sent to {client_.email} with subject '{email_type.email_subject}'."
-            )
+                # Logging the action
+                logger.info(
+                    f"Email sent to {client_.name} <{client_.email}> for {email_type_id}."
+                )
+            else:
+                logger.error(
+                    f"Failed to send email to {client_.name} <{client_.email}> for {email_type_id}."
+                )
 
     except client.DoesNotExist:
         print("Client not found.")
@@ -87,11 +92,19 @@ def clientEmailOutreach(client_id, email_type_id):
         print(f"An error occurred: {e}")
 
 
-def send_email_to_client(name, email_address, subject, body):
-    """
-    Placeholder function for sending emails.
-    In practice, integrate with your email service provider (e.g., SMTP, SendGrid, AWS SES).
-    """
-    print(f"Sending email to {email_address}: {subject} - {body}")
-    # Here you would have the actual email sending logic using an email backend like SMTP, SendCross, etc.
-    pass
+def send_email_to_client(name, to, message_id, user="ashir"):
+    # Get the GmailServiceAccountAPI instance
+    user = f"{user}@realtor-buddy.com"
+    gmail_service = GmailServiceAccountAPI(delegated_user=user)
+
+    try:
+        # Send the email
+        to = f"{name} <{to}>"
+        context = {"name": name.split(" ")[0]}
+        message = construct_email(to, message_id, context)
+        sent = gmail_service.send_email(message)
+        if sent:
+            return True
+    except Exception as e:
+        logger.error(f"An error occurred: {e}, traceback: {e.with_traceback(None)}")
+        return False

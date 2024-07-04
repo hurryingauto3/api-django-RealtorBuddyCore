@@ -52,20 +52,10 @@ class clientEmailDefinition(models.Model):
     email_subject = models.CharField(max_length=100)
     email_body = models.TextField()
 
-    def render_email(self, context, add_footer=True):
+    def render_email(self, context):
         # Replace placeholders in the subject and body
         subject = str(self.email_subject).format(**context)
         body = str(self.email_body).format(**context)
-
-        # Append footer if required
-        if add_footer:
-            footer = """
-            ---
-            You are receiving this email because you signed up for updates.
-            Our mailing address is: [Your Company Address]
-            """
-            body += footer
-
         return subject, body
 
 

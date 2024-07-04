@@ -90,7 +90,7 @@ def send_email(request):
         return JsonResponse({"message": sent})
     except Exception as e:
         return JsonResponse(
-            {"error": str(e), "traceback": str(e.with_traceback())}, status=500
+            {"error": str(e), "traceback": str(e.with_traceback(None))}, status=500
         )
 
 

@@ -1,14 +1,18 @@
 import base64
 import json
 from django.core.mail import EmailMessage
+from django.template import engines
+
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from APIRealtorBuddyCore.config import GMAIL_SERVICE_ACCOUNT
 from .models import clientEmailDefinition
+
+import logging
 import base64
 from email.mime.text import MIMEText
 
-
+logger = logging.getLogger(__name__)
 class GmailServiceAccountAPI:
 
     SCOPES = [
@@ -80,7 +84,7 @@ class GmailServiceAccountAPI:
 
     def send_email(self, message):
         # Create a MIMEText object
-        mime_message = MIMEText(message.body, _subtype="plain")
+        mime_message = MIMEText(message.body, _subtype="html")
         mime_message["to"] = message.to[0]
         mime_message["from"] = (
             f"{get_user_info(self.delegated_user)} <{self.delegated_user}>"
@@ -116,13 +120,16 @@ class GmailServiceAccountAPI:
 def construct_email(to, message_id, context):
     # Simulated retrieval of email template data
     email_data = get_email_template(message_id, context)
+
     if not email_data:
         raise ValueError("Invalid message_id or missing email template")
 
+    subject = email_data["subject"]
+    body = get_body_html(email_data["body"])
     # Create an EmailMessage object
     email = EmailMessage(
-        subject=email_data["subject"],
-        body=email_data["body"],
+        subject=subject,
+        body=body,
         to=[to],
     )
     return email
@@ -134,12 +141,16 @@ def get_email_template(message_id, context):
     subject, body = email.render_email(context)
     return {"subject": subject, "body": body}
 
-    # templates = {
-    #     "1": {"subject": "Welcome!", "body": "Thank you for joining our platform."},
-    #     "2": {"subject": "Reminder", "body": "Just a reminder about our upcoming event."},
-    # }
-    # return templates.get(str(message_id))
 
+def get_body_html(body_text):
+    jinja2_engine = engines['jinja2']  # Access the configured Jinja2 engine
+
+    # Split the body text into lines if it's not already a list
+    body_lines = body_text.split("\n") if isinstance(body_text, str) else body_text
+
+    # Render the template
+    template = jinja2_engine.get_template("email_template.html")
+    return template.render({"body": body_lines})  # Pass a dictionary with 'body' key
 
 def get_user_info(email):
     # This is a placeholder function. You should implement it to return user information.
