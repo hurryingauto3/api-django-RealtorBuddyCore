@@ -25,5 +25,6 @@ urlpatterns = [
     path("slack/", include("slackService.urls")),
     path("stripe/", include("stripeService.urls")),
     path("logging/", include("loggingService.urls")),
+    path("outreach/", include("clientOutreachService.urls")),
     # path('accounts/', include('allauth.urls')),
 ]
