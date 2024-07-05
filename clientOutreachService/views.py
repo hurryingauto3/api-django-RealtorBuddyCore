@@ -84,8 +84,11 @@ def send_email(request):
     try:
         # Send the email
         to = f"{name} <{to}>"
-        context = {"name": name.split(" ")[0]}
-        message = construct_email(to, message_id, context)
+        context = {
+            "name": name.split(" ")[0],
+            "number": '''<a href="sms:+16562203831">(656) 220 3831</a>''',
+        }
+        message = construct_email(to, user, message_id, context)
         sent = gmail_service.send_email(message)
         return JsonResponse({"message": sent})
     except Exception as e:

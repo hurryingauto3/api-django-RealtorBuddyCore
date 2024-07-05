@@ -117,7 +117,7 @@ class GmailServiceAccountAPI:
         return message
 
 
-def construct_email(to, message_id, context):
+def construct_email(to, from_, message_id, context):
     # Simulated retrieval of email template data
     email_data = get_email_template(message_id, context)
 
@@ -125,7 +125,7 @@ def construct_email(to, message_id, context):
         raise ValueError("Invalid message_id or missing email template")
 
     subject = email_data["subject"]
-    body = get_body_html(email_data["body"])
+    body = get_body_html(email_data["body"], from_name=get_user_info(from_), from_email=from_)
     # Create an EmailMessage object
     email = EmailMessage(
         subject=subject,
@@ -142,7 +142,7 @@ def get_email_template(message_id, context):
     return {"subject": subject, "body": body}
 
 
-def get_body_html(body_text):
+def get_body_html(body_text, from_name, from_email):
     jinja2_engine = engines['jinja2']  # Access the configured Jinja2 engine
 
     # Split the body text into lines if it's not already a list
@@ -150,7 +150,7 @@ def get_body_html(body_text):
 
     # Render the template
     template = jinja2_engine.get_template("email_template.html")
-    return template.render({"body": body_lines})  # Pass a dictionary with 'body' key
+    return template.render({"body": body_lines, "from_name": from_name, "from_email": from_email})
 
 def get_user_info(email):
     # This is a placeholder function. You should implement it to return user information.
