@@ -86,7 +86,7 @@ def send_email(request):
         to = f"{name} <{to}>"
         context = {
             "name": name.split(" ")[0],
-            "number": '''<a href="sms:+16562203831">(656) 220 3831</a>''',
+            "number": """<a href="sms:+16562203831" stlye="color: ##242082">(656) 220 3831</a>""",
         }
         message = construct_email(to, user, message_id, context)
         sent = gmail_service.send_email(message)

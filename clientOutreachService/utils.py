@@ -13,6 +13,8 @@ import base64
 from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
+
+
 class GmailServiceAccountAPI:
 
     SCOPES = [
@@ -125,7 +127,9 @@ def construct_email(to, from_, message_id, context):
         raise ValueError("Invalid message_id or missing email template")
 
     subject = email_data["subject"]
-    body = get_body_html(email_data["body"], from_name=get_user_info(from_), from_email=from_)
+    body = get_body_html(
+        email_data["body"], from_name=get_user_info(from_), from_email=from_
+    )
     # Create an EmailMessage object
     email = EmailMessage(
         subject=subject,
@@ -143,14 +147,17 @@ def get_email_template(message_id, context):
 
 
 def get_body_html(body_text, from_name, from_email):
-    jinja2_engine = engines['jinja2']  # Access the configured Jinja2 engine
+    jinja2_engine = engines["jinja2"]  # Access the configured Jinja2 engine
 
     # Split the body text into lines if it's not already a list
     body_lines = body_text.split("\n") if isinstance(body_text, str) else body_text
 
     # Render the template
     template = jinja2_engine.get_template("email_template.html")
-    return template.render({"body": body_lines, "from_name": from_name, "from_email": from_email})
+    return template.render(
+        {"body": body_lines, "from_name": from_name, "from_email": from_email}
+    )
+
 
 def get_user_info(email):
     # This is a placeholder function. You should implement it to return user information.
@@ -160,3 +167,34 @@ def get_user_info(email):
         "ashir@realtor-buddy.com": "Ashir Ghori",
     }
     return user_info.get(email, None)
+
+
+def send_email_to_client(name, to, message_id, user="ashir"):
+    # Get the GmailServiceAccountAPI instance
+    user = f"{user}@realtor-buddy.com"
+    gmail_service = GmailServiceAccountAPI(delegated_user=user)
+
+    try:
+        # Send the email
+        to = f"{name} <{to}>"
+        context = {"name": name.split(" ")[0]}
+        message = construct_email(to, message_id, context)
+        sent = gmail_service.send_email(message)
+        if sent:
+            return True
+    except Exception as e:
+        logger.error(f"An error occurred: {e}, traceback: {e.with_traceback(None)}")
+        return False
+
+
+def check_email_for_replies(email, user="ashir"):
+    # This is a placeholder function. You should implement it to check for email replies.
+    user = f"{user}@realtor-buddy.com"
+    gmail_service = GmailServiceAccountAPI(delegated_user=user)
+
+    try:
+        messages = gmail_service.list_email(query=f"from:{email}")
+        return bool(messages)
+    except Exception as e:
+        logger.error(f"An error occurred: {e}, traceback: {e.with_traceback(None)}")
+        return False

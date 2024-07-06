@@ -2,7 +2,7 @@ import datetime
 from django.db import transaction
 from celery import shared_task
 from .models import client, clientEmailDefinition, clientEmailOutReachRuleset
-from .utils import GmailServiceAccountAPI, construct_email
+from .utils import send_email_to_client, check_email_for_replies
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,9 +54,7 @@ def clientEmailOutreachDriver():
                         clientEmailOutreach.apply_async(args=[client.id, email_type.id])
 
 
-shared_task(name="clientEmailOutreach")
-
-
+@shared_task(name="clientEmailOutreach")
 def clientEmailOutreach(client_id, email_type_id):
     try:
         # Start a database transaction
@@ -92,19 +90,15 @@ def clientEmailOutreach(client_id, email_type_id):
         print(f"An error occurred: {e}")
 
 
-def send_email_to_client(name, to, message_id, user="ashir"):
-    # Get the GmailServiceAccountAPI instance
-    user = f"{user}@realtor-buddy.com"
-    gmail_service = GmailServiceAccountAPI(delegated_user=user)
-
-    try:
-        # Send the email
-        to = f"{name} <{to}>"
-        context = {"name": name.split(" ")[0]}
-        message = construct_email(to, message_id, context)
-        sent = gmail_service.send_email(message)
-        if sent:
-            return True
-    except Exception as e:
-        logger.error(f"An error occurred: {e}, traceback: {e.with_traceback(None)}")
-        return False
+@shared_task(name="checkForReplies")
+def checkForReplies():
+    clients = client.objects.get(replied=False)
+    for client_ in clients:
+        # Check for replies (placeholder for email checking logic)
+        replied = check_email_for_replies(client_.email)
+        if replied:
+            client_.replied = True
+            client_.save()
+            logger.info(f"Client {client_.name} <{client_.email}> has replied.")
+        else:
+            logger.info(f"No replies from {client_.name} <{client_.email}>.")
