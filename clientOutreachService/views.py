@@ -10,55 +10,9 @@ from .serializers import (
     ClientEmailOutReachRulesetSerializer,
     ClientSerializer,
 )
-from .tasks import clientEmailOutreachDriver, clientEmailOutreach
+from .tasks import clientEmailOutreachDriver
 
 logger = logging.getLogger(__name__)
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def list_email(request):
-    # Get the message ID from the request
-    # msg_id = request.GET.get("msg_id")
-    user = request.GET.get("user")
-    query = request.GET.get("query")
-
-    if not user:
-        return JsonResponse({"error": "Missing user parameter"}, status=400)
-
-    # Get the GmailServiceAccountAPI instance
-    gmail_service = GmailServiceAccountAPI(delegated_user=f"{user}@realtor-buddy.com")
-
-    try:
-        # Read the email
-        message = gmail_service.list_email(query=query)
-        return JsonResponse({"message": message})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def read_email(request):
-    # Get the message ID from the request
-    msg_id = request.GET.get("id")
-    user = request.GET.get("user")
-
-    if not msg_id:
-        return JsonResponse({"error": "Missing msg_id parameter"}, status=400)
-
-    if not user:
-        return JsonResponse({"error": "Missing user parameter"}, status=400)
-
-    # Get the GmailServiceAccountAPI instance
-    gmail_service = GmailServiceAccountAPI(delegated_user=f"{user}@realtor-buddy.com")
-
-    try:
-        # Read the email
-        message = gmail_service.read_email(msg_id)
-        return JsonResponse({"message": message})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -104,11 +58,8 @@ def send_email(request):
 def sendEmailsToClients(request):
     clientEmailOutreachDriver()
     return JsonResponse({"message": "Emails sent to clients"})
-    
-    
-    
-    
-    
+
+
 class ClientEmailDefinitionViewSet(viewsets.ModelViewSet):
     queryset = clientEmailDefinition.objects.all()
     serializer_class = ClientEmailDefinitionSerializer
@@ -122,5 +73,3 @@ class ClientEmailOutReachRulesetViewSet(viewsets.ModelViewSet):
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = client.objects.all()
     serializer_class = ClientSerializer
-
-

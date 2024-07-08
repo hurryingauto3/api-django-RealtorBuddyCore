@@ -43,11 +43,12 @@ def clientEmailOutreachDriver():
         if not email_type:
             continue  # Skip if no email type for this contact stage
 
-        if contacted_times == 1 and new_clients_count < emailRulesets.new_clients_daily:
-            logger.info(f"Sending cold email to {client_.name} <{client_.email}>.")
-            new_clients_count += 1
-            # clientEmailOutreach.apply_async(args=[client_.id, email_type.key])
-            clientEmailOutreach(client_.id, email_type.key)
+        if contacted_times < 2:
+            if new_clients_count < emailRulesets.new_clients_daily:
+                logger.info(f"Sending cold email to {client_.name} <{client_.email}>.")
+                new_clients_count += 1
+                # clientEmailOutreach.delay(client_.id, email_type.key)
+                clientEmailOutreach(client_.id, email_type.key)
 
         else:
 
@@ -75,7 +76,7 @@ def clientEmailOutreachDriver():
                     f"Sending follow-up email to {client_.name} <{client_.email}>."
                 )
                 follow_up_clients_count += 1
-                # clientEmailOutreach.apply_async(args=[client_.id, email_type.key])
+                # clientEmailOutreach.delay(client_.id, email_type.key)
                 clientEmailOutreach(client_.id, email_type.key)
 
 
@@ -84,16 +85,16 @@ def clientEmailOutreach(client_id, email_type_id):
     try:
         with transaction.atomic():
             client_ = client.objects.select_for_update().get(id=client_id)
-            
+
             replied = check_email_for_replies(client_.email)
             if replied:
                 client_.replied = True
                 client.replied_at = datetime.datetime.now()
                 client_.save()
                 logger.info(f"Client {client_.name} <{client_.email}> has replied.")
-                
+
                 return False
-            
+
             emails = clientEmailDefinition.objects.filter(Q(key=email_type_id))
             email = random.choice(emails)
 
@@ -112,16 +113,15 @@ def clientEmailOutreach(client_id, email_type_id):
                 logger.info(
                     f"Email sent to {client_.name} <{client_.email}> for email type {email_type_id}."
                 )
-                
+
                 return sent
 
             else:
                 logger.error(
                     f"Failed to send email to {client_.name} <{client_.email}> for email type {email_type_id}."
                 )
-                
+
                 return False
-            
 
     except client.DoesNotExist:
         logger.error("Client not found.")
@@ -129,4 +129,3 @@ def clientEmailOutreach(client_id, email_type_id):
         logger.error("Email type definition not found.")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
-
