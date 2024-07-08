@@ -18,7 +18,7 @@ logger = get_task_logger(__name__)
 
 @shared_task(name="clientEmailOutreachDriver")
 def clientEmailOutreachDriver():
-    clients = client.objects.filter(replied=False)
+    clients = client.objects.filter(replied_at__isnull=True)
     logger.info(f"Starting email outreach for {len(clients)} clients.")
     emailDefinitions = {ed.key: ed for ed in clientEmailDefinition.objects.all()}
     emailRulesets = clientEmailOutReachRuleset.objects.first()
@@ -88,7 +88,6 @@ def clientEmailOutreach(client_id, email_type_id):
 
             replied = check_email_for_replies(client_.email)
             if replied:
-                client_.replied = True
                 client.replied_at = datetime.datetime.now()
                 client_.save()
                 logger.info(f"Client {client_.name} <{client_.email}> has replied.")

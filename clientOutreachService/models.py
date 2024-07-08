@@ -14,7 +14,6 @@ class client(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField()
-    replied = models.BooleanField(default=False)
     replied_at = models.DateTimeField(null=True, blank=True, default=None)
     last_contacted = models.DateTimeField(null=True, blank=True, default=None)
     contacted_times = models.IntegerField(default=0)
