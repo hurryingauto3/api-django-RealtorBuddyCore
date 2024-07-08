@@ -4,11 +4,13 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import viewsets
-from .models import clientEmailDefinition, clientEmailOutReachRuleset
+from .models import clientEmailDefinition, clientEmailOutReachRuleset, client
 from .serializers import (
     ClientEmailDefinitionSerializer,
     ClientEmailOutReachRulesetSerializer,
+    ClientSerializer,
 )
+from .tasks import clientEmailOutreachDriver, clientEmailOutreach
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +99,16 @@ def send_email(request):
         )
 
 
+@csrf_exempt
+@require_http_methods(["GET"])
+def sendEmailsToClients(request):
+    clientEmailOutreachDriver()
+    return JsonResponse({"message": "Emails sent to clients"})
+    
+    
+    
+    
+    
 class ClientEmailDefinitionViewSet(viewsets.ModelViewSet):
     queryset = clientEmailDefinition.objects.all()
     serializer_class = ClientEmailDefinitionSerializer
@@ -105,3 +117,10 @@ class ClientEmailDefinitionViewSet(viewsets.ModelViewSet):
 class ClientEmailOutReachRulesetViewSet(viewsets.ModelViewSet):
     queryset = clientEmailOutReachRuleset.objects.all()
     serializer_class = ClientEmailOutReachRulesetSerializer
+
+
+class ClientViewSet(viewsets.ModelViewSet):
+    queryset = client.objects.all()
+    serializer_class = ClientSerializer
+
+

@@ -1,5 +1,8 @@
+import traceback
 import base64
 import json
+
+
 from django.core.mail import EmailMessage
 from django.template import engines
 
@@ -141,7 +144,7 @@ def construct_email(to, from_, message_id, context):
 
 def get_email_template(message_id, context):
 
-    email = clientEmailDefinition.objects.get(key=message_id)
+    email = clientEmailDefinition.objects.get(id=message_id)
     subject, body = email.render_email(context)
     return {"subject": subject, "body": body}
 
@@ -177,13 +180,18 @@ def send_email_to_client(name, to, message_id, user="ashir"):
     try:
         # Send the email
         to = f"{name} <{to}>"
-        context = {"name": name.split(" ")[0]}
-        message = construct_email(to, message_id, context)
+        context = {
+            "name": name.split(" ")[0],
+            "number": """<a href="sms:+16562203831" stlye="color: ##242082">(656) 220 3831</a>""",
+        }
+        message = construct_email(to, user, message_id, context)
         sent = gmail_service.send_email(message)
         if sent:
             return True
     except Exception as e:
-        logger.error(f"An error occurred: {e}, traceback: {e.with_traceback(None)}")
+        logger.error(
+            f"send_email_to_client: An error occurred: {e}, traceback: {traceback.format_exc()}"
+        )
         return False
 
 

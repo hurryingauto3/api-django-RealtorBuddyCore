@@ -1,104 +1,132 @@
-import datetime
 from django.db import transaction
-from celery import shared_task
-from .models import client, clientEmailDefinition, clientEmailOutReachRuleset
-from .utils import send_email_to_client, check_email_for_replies
-import logging
+import random
+import datetime
 
-logger = logging.getLogger(__name__)
+from celery import shared_task
+from django.db.models import Q
+from celery.utils.log import get_task_logger
+from .models import (
+    client,
+    clientEmailDefinition,
+    clientEmailOutReachRuleset,
+    clientEmailLogs,
+)
+from .utils import send_email_to_client, check_email_for_replies
+
+logger = get_task_logger(__name__)
 
 
 @shared_task(name="clientEmailOutreachDriver")
 def clientEmailOutreachDriver():
-
-    clients = client.objects.filter(replied=False).order_by("last_contacted")
-    emailDefinitions = clientEmailDefinition.objects.all()
-    emailRulesets = clientEmailOutReachRuleset.objects.all()
-    maxEmailStage = max([emailDefinition.key for emailDefinition in emailDefinitions])
+    clients = client.objects.filter(replied=False)
+    logger.info(f"Starting email outreach for {len(clients)} clients.")
+    emailDefinitions = {ed.key: ed for ed in clientEmailDefinition.objects.all()}
+    emailRulesets = clientEmailOutReachRuleset.objects.first()
+    maxEmailStage = max(emailDefinitions.keys())
 
     new_clients_count = 0
     follow_up_clients_count = 0
 
     for client_ in clients:
+
+        logger.info(
+            f"Processing client {client_.name} <{client_.email}>. Times contacted: {client_.contacted_times}. Last contacted: {client_.last_contacted}."
+        )
+
         if client_.contacted_times > maxEmailStage:
             continue
 
+        contacted_times = client_.contacted_times + 1
+        logger.info(f"Email stage: {contacted_times}.")
+        email_type = emailDefinitions.get(contacted_times)
+
+        if not email_type:
+            continue  # Skip if no email type for this contact stage
+
+        if contacted_times == 1 and new_clients_count < emailRulesets.new_clients_daily:
+            logger.info(f"Sending cold email to {client_.name} <{client_.email}>.")
+            new_clients_count += 1
+            # clientEmailOutreach.apply_async(args=[client_.id, email_type.key])
+            clientEmailOutreach(client_.id, email_type.key)
+
         else:
-            contacted_times = client.contacted_times + 1
-            email_type = emailDefinitions.objects.get(key=contacted_times)
+
+            if not client_.last_contacted:
+                logger.info(
+                    f"Client {client_.name} <{client_.email}> has not been contacted before."
+                )
+                continue
+
+            past_due = (
+                datetime.datetime.now() - client_.last_contacted
+            ).days > email_type.days_wait
 
             if (
-                contacted_times == 0
-                and new_clients_count < emailRulesets.new_clients_daily
+                past_due
+                and follow_up_clients_count < emailRulesets.follow_up_clients_daily
             ):
+                if not email_type.weekends and datetime.datetime.now().weekday() in [
+                    5,
+                    6,
+                ]:
+                    continue
 
-                new_clients_count += 1
-                clientEmailOutreach.apply_async(args=[client.id, email_type.id])
-
-            else:
-                past_due = (
-                    datetime.datetime.now().date() - client.last_contacted
-                    > datetime.timedelta(days=email_type.days_wait)
+                logger.info(
+                    f"Sending follow-up email to {client_.name} <{client_.email}>."
                 )
-                if (
-                    past_due
-                    and follow_up_clients_count < emailRulesets.follow_up_clients_daily
-                ):
-                    if (
-                        not email_type.weekends
-                        and datetime.datetime.now().weekday() in [5, 6]
-                    ):
-                        continue
-                    else:
-                        follow_up_clients_count += 1
-                        clientEmailOutreach.apply_async(args=[client.id, email_type.id])
+                follow_up_clients_count += 1
+                # clientEmailOutreach.apply_async(args=[client_.id, email_type.key])
+                clientEmailOutreach(client_.id, email_type.key)
 
 
 @shared_task(name="clientEmailOutreach")
 def clientEmailOutreach(client_id, email_type_id):
     try:
-        # Start a database transaction
         with transaction.atomic():
-            # Fetch the client and email type from the database correctly using `get()` instead of `filter()`
-            client_ = client.objects.get(id=client_id)
+            client_ = client.objects.select_for_update().get(id=client_id)
+            
+            replied = check_email_for_replies(client_.email)
+            if replied:
+                client_.replied = True
+                client.replied_at = datetime.datetime.now()
+                client_.save()
+                logger.info(f"Client {client_.name} <{client_.email}> has replied.")
+                
+                return False
+            
+            emails = clientEmailDefinition.objects.filter(Q(key=email_type_id))
+            email = random.choice(emails)
 
-            # Send the email (placeholder for email sending logic)
             sent = send_email_to_client(
-                client_.name, client_.email, email_type_id, user="ashir"
+                client_.name, client_.email, email.id, user="ashir"
             )
 
             if sent:
-                # Update client details
                 client_.contacted_times += 1
                 client_.last_contacted = datetime.datetime.now()
                 client_.save()
 
-                # Logging the action
+                email_log = clientEmailLogs(client=client_, email=email)
+                email_log.save()
+
                 logger.info(
-                    f"Email sent to {client_.name} <{client_.email}> for {email_type_id}."
+                    f"Email sent to {client_.name} <{client_.email}> for email type {email_type_id}."
                 )
+                
+                return sent
+
             else:
                 logger.error(
-                    f"Failed to send email to {client_.name} <{client_.email}> for {email_type_id}."
+                    f"Failed to send email to {client_.name} <{client_.email}> for email type {email_type_id}."
                 )
+                
+                return False
+            
 
     except client.DoesNotExist:
-        print("Client not found.")
-    except clientEmailPrediction.DoesNotExist:
-        print("Email type definition not found.")
+        logger.error("Client not found.")
+    except clientEmailDefinition.DoesNotExist:
+        logger.error("Email type definition not found.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
-
-@shared_task(name="checkForReplies")
-def checkForReplies():
-    clients = client.objects.get(replied=False)
-    for client_ in clients:
-        # Check for replies (placeholder for email checking logic)
-        replied = check_email_for_replies(client_.email)
-        if replied:
-            client_.replied = True
-            client_.save()
-            logger.info(f"Client {client_.name} <{client_.email}> has replied.")
-        else:
-            logger.info(f"No replies from {client_.name} <{client_.email}>.")

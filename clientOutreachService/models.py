@@ -9,37 +9,34 @@ from django.db import models
 
 class client(models.Model):
     id = models.AutoField(primary_key=True)
-    created = models.DateField()
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20)
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=2)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=100)
-    contacted = models.BooleanField(default=False)
+    email = models.EmailField()
+    phone = models.CharField()
     replied = models.BooleanField(default=False)
-    contacted_date = models.DateField(null=True, blank=True)
-    last_contacted = models.DateField(null=True, blank=True)
+    replied_at = models.DateTimeField(null=True, blank=True, default=None)
+    last_contacted = models.DateTimeField(null=True, blank=True, default=None)
     contacted_times = models.IntegerField(default=0)
 
-
-class emailStageDefinition(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-
-
-class emailStage(models.Model):
-    id = models.AutoField(primary_key=True)
-    created = models.DateField()
-    updated = models.DateField()
-    stage = models.ForeignKey(emailStageDefinition(), on_delete=models.CASCADE)
-    client = models.ForeignKey(client, on_delete=models.CASCADE)
+# class emailStageDefinition(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     name = models.CharField(max_length=100)
 
 
-class emailStageHistory(models.Model):
-    id = models.AutoField(primary_key=True)
-    created = models.DateField()
-    stage = models.ForeignKey(emailStage, on_delete=models.CASCADE)
-    client = models.ForeignKey(client, on_delete=models.CASCADE)
+# class emailStage(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     created = models.DateField()
+#     updated = models.DateField()
+#     stage = models.ForeignKey(emailStageDefinition(), on_delete=models.CASCADE)
+#     client = models.ForeignKey(client, on_delete=models.CASCADE)
+
+
+# class emailStageHistory(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     created = models.DateField()
+#     stage = models.ForeignKey(emailStage, on_delete=models.CASCADE)
+#     client = models.ForeignKey(client, on_delete=models.CASCADE)
 
 
 class clientEmailDefinition(models.Model):
@@ -65,3 +62,10 @@ class clientEmailOutReachRuleset(models.Model):
     updated = models.DateTimeField(auto_now=True)
     new_clients_daily = models.IntegerField()
     follow_up_clients_daily = models.IntegerField()
+
+
+class clientEmailLogs(models.Model):
+    id = models.AutoField(primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+    client = models.ForeignKey(client, on_delete=models.CASCADE)
+    email = models.ForeignKey(clientEmailDefinition, on_delete=models.CASCADE)

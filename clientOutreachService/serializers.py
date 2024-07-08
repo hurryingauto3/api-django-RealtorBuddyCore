@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import clientEmailDefinition, clientEmailOutReachRuleset
+from .models import clientEmailDefinition, clientEmailOutReachRuleset, client
 
 class ClientEmailDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,4 +9,9 @@ class ClientEmailDefinitionSerializer(serializers.ModelSerializer):
 class ClientEmailOutReachRulesetSerializer(serializers.ModelSerializer):
     class Meta:
         model = clientEmailOutReachRuleset
+        fields = '__all__'
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = client
         fields = '__all__'
