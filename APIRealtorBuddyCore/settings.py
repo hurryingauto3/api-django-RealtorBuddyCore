@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "stripeService",
     "slackService",
     "loggingService",
+    "clientOutreachService",
 ]
 
 MIDDLEWARE = [
@@ -149,8 +150,17 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # "allauth.account.context_processors.account",
             ],
+        },
+    },
+    {
+        "BACKEND": "django.template.backends.jinja2.Jinja2",
+        "DIRS": [
+            os.path.join(BASE_DIR, "APIRealtorBuddyCore/templates"),
+        ],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "environment": "APIRealtorBuddyCore.jinja2.environment",
         },
     },
 ]
