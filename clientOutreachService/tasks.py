@@ -65,15 +65,17 @@ def clientEmailOutreachDriver():
             ).days > email_type.days_wait
 
             if past_due:
-                
-                if new_follow_up_clients_count < emailRulesets.follow_up_clients_daily:
-                    new_follow_up_clients_count += 1
 
-                    logger.info(
-                        f"Sending follow-up email to {client_.name} <{client_.email}> with email type {email_type.key}."
-                    )
-                    clientEmailOutreach.delay(client_.id, email_type.key)
-                    # clientEmailOutreach(client_.id, email_type.key)
+                # if new_follow_up_clients_count < emailRulesets.follow_up_clients_daily:
+                new_follow_up_clients_count += 1
+
+                logger.info(
+                    f"Sending follow-up email to {client_.name} <{client_.email}> with email type {email_type.key}."
+                )
+                clientEmailOutreach.delay(client_.id, email_type.key)
+                # clientEmailOutreach(client_.id, email_type.key)
+
+    return f"Email outreach completed. {new_clients_count} new clients and {new_follow_up_clients_count} follow-up clients contacted."
 
 
 @shared_task(name="clientEmailOutreach")
