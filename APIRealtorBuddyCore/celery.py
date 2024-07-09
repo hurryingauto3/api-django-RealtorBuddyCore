@@ -27,14 +27,9 @@ app.conf.broker_connection_max_retries = 10
 app.conf.broker_connection_timeout = 10
 
 app.conf.beat_schedule = {
-    # 'run-my_periodic_task-every-minute': {
-    #     'task': 'mayAIService.tasks.async_processMessages',
-    #     'schedule': crontab(minute='*/1', hour='13-23'),
-    # },
-    # 'run-my_periodic_task-every-ten-minutes': {
-    #     'task': 'leadProcessingService.tasks.processLeadsForOutreach',
-    #     'args': (30,),  # This is the limit of leads to process
-    #     'schedule': crontab(minute='*/10', hour='13-23'),
-    # },
-    # You can add more tasks to the schedule dictionary as needed.
+    "clientEmailOutreachDaily": {
+        "task": "clientEmailOutreach",
+        "schedule": crontab(minute=0, hour=15, day_of_week='mon,tue,wed,thu,fri,sat'),
+        "args": (),
+    },
 }

@@ -25,7 +25,7 @@ def clientEmailOutreachDriver():
     maxEmailStage = max(emailDefinitions.keys())
 
     new_clients_count = 0
-    follow_up_clients_count = 0
+    new_follow_up_clients_count = 0
 
     for client_ in clients:
 
@@ -37,7 +37,6 @@ def clientEmailOutreachDriver():
             continue
 
         contacted_times = client_.contacted_times + 1
-        logger.info(f"Email stage: {contacted_times}.")
         email_type = emailDefinitions.get(contacted_times)
 
         if not email_type:
@@ -45,10 +44,13 @@ def clientEmailOutreachDriver():
 
         if contacted_times < 2:
             if new_clients_count < emailRulesets.new_clients_daily:
-                logger.info(f"Sending cold email to {client_.name} <{client_.email}>.")
+
+                logger.info(
+                    f"Sending initial email to {client_.name} <{client_.email}> with email type {email_type.key}."
+                )
                 new_clients_count += 1
-                # clientEmailOutreach.delay(client_.id, email_type.key)
-                clientEmailOutreach(client_.id, email_type.key)
+                clientEmailOutreach.delay(client_.id, email_type.key)
+                # clientEmailOutreach(client_.id, email_type.key)
 
         else:
 
@@ -62,22 +64,16 @@ def clientEmailOutreachDriver():
                 datetime.datetime.now() - client_.last_contacted
             ).days > email_type.days_wait
 
-            if (
-                past_due
-                and follow_up_clients_count < emailRulesets.follow_up_clients_daily
-            ):
-                if not email_type.weekends and datetime.datetime.now().weekday() in [
-                    5,
-                    6,
-                ]:
-                    continue
+            if past_due:
+                
+                if new_follow_up_clients_count < emailRulesets.follow_up_clients_daily:
+                    new_follow_up_clients_count += 1
 
-                logger.info(
-                    f"Sending follow-up email to {client_.name} <{client_.email}>."
-                )
-                follow_up_clients_count += 1
-                # clientEmailOutreach.delay(client_.id, email_type.key)
-                clientEmailOutreach(client_.id, email_type.key)
+                    logger.info(
+                        f"Sending follow-up email to {client_.name} <{client_.email}> with email type {email_type.key}."
+                    )
+                    clientEmailOutreach.delay(client_.id, email_type.key)
+                    # clientEmailOutreach(client_.id, email_type.key)
 
 
 @shared_task(name="clientEmailOutreach")
@@ -96,6 +92,10 @@ def clientEmailOutreach(client_id, email_type_id):
 
             emails = clientEmailDefinition.objects.filter(Q(key=email_type_id))
             email = random.choice(emails)
+
+            logger.info(
+                f"Sending email to {client_.name} <{client_.email}> for email type {email.key}."
+            )
 
             sent = send_email_to_client(
                 client_.name, client_.email, email.id, user="ashir"

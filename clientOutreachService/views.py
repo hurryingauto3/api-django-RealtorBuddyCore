@@ -56,7 +56,7 @@ def send_email(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def sendEmailsToClients(request):
-    clientEmailOutreachDriver()
+    clientEmailOutreachDriver.delay()
     return JsonResponse({"message": "Emails sent to clients"})
 
 
