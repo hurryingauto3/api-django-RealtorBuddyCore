@@ -43,7 +43,6 @@ class clientEmailDefinition(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     key = models.IntegerField()
-    weekends = models.BooleanField()
     days_wait = models.IntegerField()
     email_subject = models.CharField(max_length=100)
     email_body = models.TextField()
