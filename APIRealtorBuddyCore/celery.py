@@ -28,8 +28,8 @@ app.conf.broker_connection_timeout = 10
 
 app.conf.beat_schedule = {
     "clientEmailOutreachDaily": {
-        "task": "clientEmailOutreach",
-        "schedule": crontab(minute=0, hour=15, day_of_week='mon,tue,wed,thu,fri,sat'),
+        "task": "clientEmailOutreachDriver",
+        "schedule": crontab(minute=0, hour=16, day_of_week='mon,tue,wed,thu,fri,sat'),
         "args": (),
     },
 }
